@@ -1,0 +1,199 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  STUDENT
+}
+
+enum ImportStatus {
+  VALIDATED
+  STORED
+  FAILED
+}
+
+enum ScheduleStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+enum SharePermission {
+  VIEW
+  COMMENT
+}
+
+enum ConflictType {
+  TIME_OVERLAP
+  LOCATION_GAP
+  CAPACITY_LIMIT
+  CUSTOM
+}
+
+enum ConflictSeverity {
+  LOW
+  MEDIUM
+  HIGH
+}
+
+model User {
+  id            String         @id @default(cuid())
+  email         String         @unique
+  passwordHash  String
+  fullName      String
+  studentCode   String?        @unique
+  role          UserRole       @default(STUDENT)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  importBatches ImportBatch[]
+  selections    UserSelection[]
+  schedules     Schedule[]
+}
+
+model ImportBatch {
+  id               String            @id @default(cuid())
+  userId           String?
+  user             User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  fileName         String
+  mimeType         String
+  sheetName        String?
+  rowCount         Int
+  subjectCount     Int
+  status           ImportStatus      @default(VALIDATED)
+  originalHeaders  Json
+  normalizedHeaders Json
+  warnings         Json?
+  metadata         Json?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  sections         ImportedSection[]
+  schedules        Schedule[]
+
+  @@index([userId, createdAt])
+}
+
+model UserSelection {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courseCode String
+  classCode  String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, courseCode])
+  @@index([userId])
+}
+
+model ImportedSection {
+  id               String        @id @default(cuid())
+  batchId          String
+  batch            ImportBatch   @relation(fields: [batchId], references: [id], onDelete: Cascade)
+  semester         String?
+  school           String?
+  classCode        String
+  classCodeAlt     String?
+  courseCode       String
+  courseName       String
+  courseNameEn     String?
+  creditWeight     Int           @default(0)
+  note             String?
+  sessionNo        String?
+  weekday          String
+  timeLabel        String?
+  startTime        String?
+  endTime          String?
+  startPeriod      Int?
+  endPeriod        Int?
+  weekRange        String?
+  room             String
+  teacherName      String?
+  enrollmentCount  Int
+  maxSeats         Int
+  status           String
+  classType        String
+  openingBatch     String
+  rawRow           Json
+  conflictScore    Int           @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  scheduleItems    ScheduleItem[]
+
+  @@index([batchId, courseCode])
+  @@index([courseCode, classCode])
+}
+
+model Schedule {
+  id              String            @id @default(cuid())
+  userId          String
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  sourceBatchId   String?
+  sourceBatch     ImportBatch?      @relation(fields: [sourceBatchId], references: [id], onDelete: SetNull)
+  name            String
+  semester        String?
+  academicYear    String?
+  description     String?
+  status          ScheduleStatus    @default(DRAFT)
+  conflictSummary Json?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  items           ScheduleItem[]
+  conflicts       ScheduleConflict[]
+  shares          ScheduleShare[]
+
+  @@index([userId, createdAt])
+  @@index([sourceBatchId])
+}
+
+model ScheduleItem {
+  id               String        @id @default(cuid())
+  scheduleId       String
+  schedule         Schedule      @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  importedSectionId String?
+  importedSection  ImportedSection? @relation(fields: [importedSectionId], references: [id], onDelete: SetNull)
+  courseCode       String
+  courseName       String
+  classCode        String
+  weekday          String
+  startTime        String
+  endTime          String
+  room             String
+  building         String?
+  color            String?
+  sortOrder        Int           @default(0)
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@index([scheduleId, weekday])
+  @@index([importedSectionId])
+}
+
+model ScheduleConflict {
+  id          String           @id @default(cuid())
+  scheduleId  String
+  schedule    Schedule         @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  type        ConflictType
+  severity    ConflictSeverity @default(MEDIUM)
+  message     String
+  metadata    Json?
+  createdAt   DateTime         @default(now())
+
+  @@index([scheduleId, type])
+}
+
+model ScheduleShare {
+  id           String           @id @default(cuid())
+  scheduleId   String
+  schedule     Schedule         @relation(fields: [scheduleId], references: [id], onDelete: Cascade)
+  slug         String           @unique
+  permission   SharePermission  @default(VIEW)
+  expiresAt    DateTime?
+  createdAt    DateTime         @default(now())
+
+  @@index([scheduleId, createdAt])
+}

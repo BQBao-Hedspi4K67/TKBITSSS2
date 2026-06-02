@@ -1,0 +1,1087 @@
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tempo – Xây dựng thời khóa biểu từ Excel</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.min.js"></script>
+</head>
+<body>
+<h2 class="sr-only">Student Schedule Builder</h2>
+<style>
+:root{--font-sans:"Segoe UI",Tahoma,sans-serif;--color-text-primary:#1D2939;--color-text-secondary:#6D7280;--color-text-tertiary:#9CA3AF;--color-background-primary:#fff;--color-background-secondary:#F9FAFB;--color-background-info:#E6F1FB;--color-border-secondary:#D1D5DB;--color-border-tertiary:#E5E7EB;--border-radius-md:6px;--border-radius-lg:8px}
+*{box-sizing:border-box;margin:0;padding:0}
+.screen{display:none}
+.screen.act{display:block}
+.stabs{display:flex;gap:3px;padding:7px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);margin-bottom:10px;flex-wrap:wrap}
+.stab{padding:5px 11px;font-size:12px;cursor:pointer;border-radius:var(--border-radius-md);border:0.5px solid transparent;color:var(--color-text-secondary);background:transparent;font-family:var(--font-sans)}
+.stab.on{background:var(--color-background-primary);border-color:var(--color-border-secondary);color:var(--color-text-primary);font-weight:500}
+.al{display:flex;min-height:530px;border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);overflow:hidden}
+.sb{width:172px;flex-shrink:0;background:var(--color-background-secondary);border-right:0.5px solid var(--color-border-tertiary);display:flex;flex-direction:column}
+.ma{flex:1;display:flex;flex-direction:column;min-width:0}
+.tb{padding:8px 12px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.ws{display:flex;flex:1;min-height:0;overflow:hidden}
+.ca{flex:1;padding:10px;overflow-y:auto;min-width:0}
+.sp{width:206px;flex-shrink:0;border-left:0.5px solid var(--color-border-tertiary);overflow-y:auto;display:flex;flex-direction:column}
+.nv{display:flex;align-items:center;gap:7px;padding:6px 13px;font-size:12px;cursor:pointer;color:var(--color-text-secondary);border-left:2px solid transparent;transition:all .15s}
+.nv:hover{background:var(--color-background-primary);color:var(--color-text-primary)}
+.nv.on{color:#185FA5;border-left-color:#378ADD;background:var(--color-background-info)}
+.nv svg{width:13px;height:13px;flex-shrink:0}
+.bs{padding:4px 9px;font-size:11px;border-radius:var(--border-radius-md);border:0.5px solid var(--color-border-secondary);cursor:pointer;background:transparent;color:var(--color-text-primary);font-family:var(--font-sans)}
+.bp{background:#378ADD;border-color:#378ADD;color:#fff}
+.bd{background:#E24B4A;border-color:#E24B4A;color:#fff}
+.cb{position:absolute;left:2px;right:2px;border-radius:4px;padding:3px 5px;font-size:10px;font-weight:500;cursor:pointer;overflow:hidden;border:none;text-align:left}
+.cb.bl{background:#B5D4F4;color:#0C447C}.cb.pu{background:#CECBF6;color:#3C3489}.cb.te{background:#9FE1CB;color:#085041}.cb.am{background:#FAC775;color:#633806}.cb.gr{background:#C0DD97;color:#27500A}.cb.re{background:#F7C1C1;color:#791F1F;border:1px solid #E24B4A}
+.cb:hover{opacity:.88}
+.sc{padding:9px;border-bottom:0.5px solid var(--color-border-tertiary);cursor:pointer}
+.sc:hover{background:var(--color-background-secondary)}
+.mc{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;margin:5px 0;background:var(--color-border-tertiary);border:0.5px solid var(--color-border-tertiary);border-radius:3px;overflow:hidden}
+.mc-c{height:28px;background:var(--color-background-primary)}
+.tag{display:inline-block;padding:1px 6px;border-radius:8px;font-size:10px;font-weight:500;margin:1px}
+.tg{background:#EAF3DE;color:#3B6D11}.tb2{background:#E6F1FB;color:#185FA5}.ta{background:#FAEEDA;color:#854F0B}
+.sb-bar{height:3px;border-radius:2px;background:var(--color-border-tertiary);margin:3px 0}
+.sb-fill{height:100%;border-radius:2px;background:#378ADD}
+.cfbar{background:#FCEBEB;border:0.5px solid #F09595;border-radius:var(--border-radius-md);padding:7px 10px;margin-bottom:9px;display:flex;align-items:center;gap:7px;font-size:11px;color:#A32D2D}
+.sv-card{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:11px;background:var(--color-background-primary)}
+.mg-bg{background:rgba(0,0,0,.32);min-height:500px;display:flex;align-items:center;justify-content:center;border-radius:var(--border-radius-lg)}
+.mg{background:var(--color-background-primary);border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:18px;max-width:390px;width:94%}
+.upload-area{border:2px dashed #378ADD;border-radius:var(--border-radius-lg);padding:20px;text-align:center;background:#E6F1FB;cursor:pointer;transition:all 0.3s}
+.upload-area:hover{background:#D0E8FF}
+.upload-area.dragover{background:#B8DEFF}
+.subject-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;margin-top:12px}
+.subject-item{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:10px;cursor:pointer;transition:all 0.2s;user-select:none}
+.subject-item:hover{background:var(--color-background-info);border-color:#378ADD}
+.subject-item.selected{background:#378ADD;color:white;border-color:#378ADD}
+.class-selection{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-top:12px}
+.class-card{border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px;cursor:pointer;transition:all 0.2s}
+.class-card:hover{background:var(--color-background-secondary);border-color:#378ADD}
+.class-card.selected{background:#E6F1FB;border-color:#378ADD;border-width:2px}
+.class-card.full{opacity:0.5;pointer-events:none}
+.class-time{font-size:11px;color:var(--color-text-secondary);margin:4px 0}
+.class-location{font-size:10px;color:var(--color-text-tertiary);margin:2px 0}
+.filter-section{margin-bottom:12px;padding-bottom:12px;border-bottom:0.5px solid var(--color-border-tertiary)}
+.badge-full{background:#FCEBEB;color:#A32D2D;font-size:9px;padding:1px 5px;border-radius:5px;margin-top:4px;display:inline-block}
+.badge-available{background:#EAF3DE;color:#27500A;font-size:9px;padding:1px 5px;border-radius:5px;margin-top:4px;display:inline-block}
+</style>
+
+<div style="font-family:var(--font-sans);padding:2px 0">
+
+<div class="stabs">
+  <button class="stab on" onclick="sw('upload',this)">Upload Excel</button>
+  <button class="stab" onclick="sw('dash',this)">Dashboard</button>
+  <button class="stab" onclick="sw('sugg',this)">Gợi ý phương án</button>
+  <button class="stab" onclick="sw('save',this)">Lịch đã lưu</button>
+  <button class="stab" onclick="sw('shar',this)">Chia sẻ</button>
+  <button class="stab" onclick="sw('filt',this)">Lọc &amp; Xung đột</button>
+</div>
+
+<!-- ━━━ SCREEN 0 UPLOAD ━━━ -->
+<div id="s-upload" class="screen act">
+  <div class="al">
+    <aside class="sb">
+      <div style="padding:10px 13px 10px;border-bottom:0.5px solid var(--color-border-tertiary)">
+        <div style="font-size:14px;font-weight:500;color:var(--color-text-primary);letter-spacing:-.3px">Tempo</div>
+        <div style="font-size:10px;color:var(--color-text-tertiary);margin-top:1px">Import dữ liệu</div>
+      </div>
+    </aside>
+    <main class="ma">
+      <div class="tb">
+        <div style="font-size:12px;font-weight:500;flex:1;color:var(--color-text-primary)">Upload tệp Excel danh sách lớp học</div>
+      </div>
+      <div class="ca" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px">
+        <div class="upload-area" id="uploadArea" ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragend="handleDragEnd(event)" onclick="document.getElementById('fileInput').click()">
+          <div style="font-size:28px;margin-bottom:10px">📁</div>
+          <div style="font-size:14px;font-weight:500;color:var(--color-text-primary);margin-bottom:5px">Kéo thả file Excel vào đây</div>
+          <div style="font-size:12px;color:var(--color-text-secondary)">hoặc nhấp để chọn tệp</div>
+          <div style="font-size:11px;color:var(--color-text-tertiary);margin-top:10px">Hỗ trợ: .xlsx, .xls, .csv</div>
+        </div>
+        <input type="file" id="fileInput" accept=".xlsx,.xls,.csv" style="display:none" onchange="handleFileSelect(event)">
+        
+        <div style="margin-top:30px;max-width:500px">
+          <div style="font-size:12px;font-weight:500;color:var(--color-text-primary);margin-bottom:10px">Định dạng file Excel yêu cầu:</div>
+          <div style="background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:12px;font-size:11px;color:var(--color-text-secondary);line-height:1.6">
+            <strong>Cột cần có:</strong><br>
+            • Mã môn (Ví dụ: CS301)<br>
+            • Tên môn (Ví dụ: Giải thuật)<br>
+            • Mã lớp (Ví dụ: LT01)<br>
+            • Thứ (Thứ Hai, Thứ Ba, ...)<br>
+            • Giờ bắt đầu (8:00, 10:00, ...)<br>
+            • Giờ kết thúc (9:30, 11:30, ...)<br>
+            • Tòa (Tòa A, Tòa B)<br>
+            • Phòng (B201, A105, ...)<br>
+            • Sỉ số / Số đăng ký (20/40, ...)<br>
+            • Tín chỉ (2, 3, ...)<br>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ━━━ SCREEN 1 SUBJECT SELECTION ━━━ -->
+<div id="s-select" class="screen">
+  <div class="al">
+    <aside class="sb">
+      <div style="padding:10px 13px 10px;border-bottom:0.5px solid var(--color-border-tertiary)">
+        <div style="font-size:14px;font-weight:500">Tempo</div>
+        <div style="font-size:10px;color:var(--color-text-tertiary)">Chọn môn học</div>
+      </div>
+      <div style="padding:10px 13px;flex:1;overflow-y:auto">
+        <div style="font-size:10px;color:var(--color-text-secondary);font-weight:500;margin-bottom:8px">Thống kê</div>
+        <div style="margin-bottom:9px">
+          <div style="font-size:10px;color:var(--color-text-tertiary);margin-bottom:2px">Môn được chọn</div>
+          <div style="font-size:14px;font-weight:500;color:var(--color-text-primary)" id="selectedCount">0/5</div>
+        </div>
+        <div style="margin-bottom:9px">
+          <div style="font-size:10px;color:var(--color-text-tertiary);margin-bottom:2px">Tín chỉ</div>
+          <div style="font-size:14px;font-weight:500;color:var(--color-text-primary)" id="totalCredits">0 tín</div>
+        </div>
+        <button class="bs bp" style="width:100%;font-size:11px;padding:6px;margin-top:10px" onclick="proceedToClassSelection()">Tiếp tục chọn lớp →</button>
+      </div>
+    </aside>
+    <main class="ma">
+      <div class="tb">
+        <div style="font-size:12px;font-weight:500;flex:1">Chọn các môn học bạn muốn đăng ký</div>
+        <input type="text" id="searchSubject" placeholder="Tìm kiếm môn..." style="border:0.5px solid var(--color-border-tertiary);padding:5px 8px;border-radius:var(--border-radius-md);font-size:11px;width:200px">
+      </div>
+      <div class="ca" style="padding:12px">
+        <div id="subjectList" class="subject-list">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ━━━ SCREEN 1.5 CLASS SELECTION ━━━ -->
+<div id="s-classes" class="screen">
+  <div class="al">
+    <aside class="sb">
+      <div style="padding:10px 13px 10px;border-bottom:0.5px solid var(--color-border-tertiary)">
+        <div style="font-size:14px;font-weight:500">Bộ lọc</div>
+        <div style="font-size:10px;color:var(--color-text-tertiary)">Tùy chọn lọc</div>
+      </div>
+      <div style="padding:10px 13px;flex:1;overflow-y:auto">
+        <div class="filter-section">
+          <div style="font-size:10px;font-weight:500;color:var(--color-text-secondary);margin-bottom:7px">Thời gian</div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox" checked onchange="filterClasses()"> Sáng (7–12h)</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox" onchange="filterClasses()"> Chiều (13–17h)</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox" onchange="filterClasses()"> Tối (18–21h)</label>
+          </div>
+        </div>
+        <div class="filter-section">
+          <div style="font-size:10px;font-weight:500;color:var(--color-text-secondary);margin-bottom:7px">Tòa</div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox" checked onchange="filterClasses()"> Tòa A</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox" checked onchange="filterClasses()"> Tòa B</label>
+          </div>
+        </div>
+        <div class="filter-section">
+          <div style="font-size:10px;font-weight:500;color:var(--color-text-secondary);margin-bottom:7px">Ngày nghỉ</div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox"> Thứ Hai</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox"> Thứ Ba</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox"> Thứ Tư</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox"> Thứ Năm</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox"> Thứ Sáu</label>
+          </div>
+        </div>
+        <button class="bs bp" style="width:100%;font-size:10px;padding:5px;margin-bottom:4px" onclick="sw('dash', document.querySelectorAll('.stab')[1])">Xem lịch</button>
+        <button class="bs" style="width:100%;font-size:10px;padding:5px" onclick="sw('select', document.querySelectorAll('.stab')[1])">← Quay lại</button>
+      </div>
+    </aside>
+    <main class="ma">
+      <div class="tb">
+        <div style="font-size:12px;font-weight:500;flex:1" id="classTitle">Chọn lớp học</div>
+      </div>
+      <div class="ca" style="padding:12px">
+        <div id="classList" class="class-selection">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ━━━ SCREEN 1 DASHBOARD ━━━ -->
+<div id="s-dash" class="screen act">
+  <div class="al">
+    <aside class="sb">
+      <div style="padding:10px 13px 10px;border-bottom:0.5px solid var(--color-border-tertiary)">
+        <div style="font-size:14px;font-weight:500;color:var(--color-text-primary);letter-spacing:-.3px">Tempo</div>
+        <div style="font-size:10px;color:var(--color-text-tertiary);margin-top:1px">HK1 · 2024–2025</div>
+      </div>
+      <nav style="padding:6px 0">
+        <div class="nv on"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="2" width="12" height="12" rx="2"/><line x1="2" y1="6" x2="14" y2="6"/><line x1="6" y1="2" x2="6" y2="14"/></svg>Dashboard</div>
+        <div class="nv" onclick="sw('sugg',document.querySelectorAll('.stab')[2])"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M8 2l1.5 3 3.5.5-2.5 2.5.5 3.5L8 10l-3 1.5.5-3.5L3 5.5 6.5 5z"/></svg>Gợi ý</div>
+        <div class="nv" onclick="sw('save',document.querySelectorAll('.stab')[3])"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 3h10v10H3zM6 3v4h4V3"/></svg>Đã lưu</div>
+        <div class="nv" onclick="sw('filt',document.querySelectorAll('.stab')[5])"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="2" y1="4" x2="14" y2="4"/><line x1="5" y1="8" x2="11" y2="8"/><line x1="7" y1="12" x2="9" y2="12"/></svg>Bộ lọc</div>
+        <div class="nv" onclick="sw('shar',document.querySelectorAll('.stab')[4])"><svg viewBox="0 0 16 16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M11 3l3 3-3 3M2 10V8a5 5 0 0 1 5-5h7"/></svg>Chia sẻ</div>
+      </nav>
+      <div style="margin-top:auto;padding:10px 13px;border-top:0.5px solid var(--color-border-tertiary)">
+        <div style="font-size:10px;color:var(--color-text-tertiary);margin-bottom:3px">Tín chỉ học kỳ</div>
+        <div style="font-size:14px;font-weight:500;color:var(--color-text-primary)">15 / 18</div>
+        <div style="height:3px;border-radius:2px;background:var(--color-border-tertiary);margin-top:4px"><div style="width:83%;height:100%;border-radius:2px;background:#378ADD"></div></div>
+        <div style="font-size:10px;color:var(--color-text-secondary);margin-top:5px">5 môn · 3 tín còn lại</div>
+        <div style="margin-top:8px;display:flex;align-items:center;gap:5px">
+          <div style="width:22px;height:22px;border-radius:50%;background:#B5D4F4;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:500;color:#0C447C">AN</div>
+          <div>
+            <div style="font-size:11px;font-weight:500;color:var(--color-text-primary)">Nguyễn Văn An</div>
+            <div style="font-size:9px;color:var(--color-text-tertiary)">21522001</div>
+          </div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="ma">
+      <div class="tb">
+        <div style="font-size:12px;font-weight:500;flex:1;color:var(--color-text-primary)">Thời khóa biểu tuần 8</div>
+        <button class="bs" onclick="sw('filt',document.querySelectorAll('.stab')[5])">Bộ lọc</button>
+        <button class="bs" onclick="sw('sugg',document.querySelectorAll('.stab')[2])">Gợi ý lịch</button>
+        <button class="bs bp" onclick="sw('shar',document.querySelectorAll('.stab')[4])">Chia sẻ</button>
+      </div>
+
+      <div class="ws">
+        <!-- CALENDAR AREA -->
+        <div class="ca">
+          <div class="cfbar">
+            <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke="#A32D2D" stroke-width="1.5"><circle cx="8" cy="8" r="6"/><line x1="8" y1="5" x2="8" y2="9"/><circle cx="8" cy="11.5" r=".6" fill="#A32D2D"/></svg>
+            <span><strong>2 xung đột</strong> phát hiện · Thứ Tư trùng giờ (10:00–11:30) · Thứ Ba địa điểm sát (12:30→13:00, <10 phút)</span>
+            <button class="bs bd" style="margin-left:auto;padding:2px 7px;font-size:10px" onclick="sw('filt',document.querySelectorAll('.stab')[5])">Chi tiết</button>
+          </div>
+
+          <!-- Day headers -->
+          <div style="display:flex;margin-left:38px;margin-bottom:2px">
+            <div style="flex:1;text-align:center;font-size:10px;color:var(--color-text-secondary);font-weight:500;padding:3px 0">T.Hai</div>
+            <div style="flex:1;text-align:center;font-size:10px;color:var(--color-text-secondary);font-weight:500;padding:3px 0">T.Ba</div>
+            <div style="flex:1;text-align:center;font-size:10px;color:#E24B4A;font-weight:500;padding:3px 0">T.Tư ⚠</div>
+            <div style="flex:1;text-align:center;font-size:10px;color:var(--color-text-secondary);font-weight:500;padding:3px 0">T.Năm</div>
+            <div style="flex:1;text-align:center;font-size:10px;color:var(--color-text-secondary);font-weight:500;padding:3px 0">T.Sáu</div>
+          </div>
+
+          <!-- Calendar body -->
+          <div style="display:flex">
+            <!-- Time labels -->
+            <div style="width:38px;flex-shrink:0">
+              <div style="height:44px;display:flex;align-items:flex-start;padding-top:2px;padding-right:4px;justify-content:flex-end;font-size:9px;color:var(--color-text-tertiary)">8:00</div>
+              <div style="height:44px;display:flex;align-items:flex-start;padding-top:2px;padding-right:4px;justify-content:flex-end;font-size:9px;color:var(--color-text-tertiary)">9:00</div>
+              <div style="height:44px;display:flex;align-items:flex-start;padding-top:2px;padding-right:4px;justify-content:flex-end;font-size:9px;color:var(--color-text-tertiary)">10:00</div>
+              <div style="height:44px;display:flex;align-items:flex-start;padding-top:2px;padding-right:4px;justify-content:flex-end;font-size:9px;color:var(--color-text-tertiary)">11:00</div>
+              <div style="height:44px;display:flex;align-items:flex-start;padding-top:2px;padding-right:4px;justify-content:flex-end;font-size:9px;color:var(--color-text-tertiary)">12:00</div>
+              <div style="height:44px;display:flex;align-items:flex-start;padding-top:2px;padding-right:4px;justify-content:flex-end;font-size:9px;color:var(--color-text-tertiary)">13:00</div>
+              <div style="height:44px;display:flex;align-items:flex-start;padding-top:2px;padding-right:4px;justify-content:flex-end;font-size:9px;color:var(--color-text-tertiary)">14:00</div>
+              <div style="height:44px;display:flex;align-items:flex-start;padding-top:2px;padding-right:4px;justify-content:flex-end;font-size:9px;color:var(--color-text-tertiary)">15:00</div>
+              <div style="height:44px;display:flex;align-items:flex-start;padding-top:2px;padding-right:4px;justify-content:flex-end;font-size:9px;color:var(--color-text-tertiary)">16:00</div>
+            </div>
+
+            <!-- 5 day columns -->
+            <div style="flex:1;display:grid;grid-template-columns:repeat(5,1fr)">
+
+              <!-- MONDAY -->
+              <div style="position:relative;height:396px;border-left:0.5px solid var(--color-border-tertiary)">
+                <div style="position:absolute;top:44px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:88px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:132px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:176px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:220px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:264px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:308px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:352px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div class="cb bl" style="top:2px;height:62px" title="CS301 · Giải thuật · Tòa A · Phòng B201">
+                  <div style="font-size:9px;font-weight:500">CS301</div>
+                  <div style="font-size:8px;opacity:.8">Giải thuật</div>
+                  <div style="font-size:8px;opacity:.65">8:00–9:30</div>
+                </div>
+              </div>
+
+              <!-- TUESDAY -->
+              <div style="position:relative;height:396px;border-left:0.5px solid var(--color-border-tertiary)">
+                <div style="position:absolute;top:44px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:88px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:132px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:176px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:220px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:264px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:308px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:352px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <!-- PHY101: 9:00-10:30 = top:46px, height:62px -->
+                <div class="cb te" style="top:46px;height:62px">
+                  <div style="font-size:9px;font-weight:500">PHY101</div>
+                  <div style="font-size:8px;opacity:.8">Vật lý I</div>
+                  <div style="font-size:8px;opacity:.65">9:00–10:30 · Tòa A</div>
+                </div>
+                <!-- ENG101: 13:00-15:00 = top:222px, height:85px (cảnh báo địa điểm < 10 phút) -->
+                <div class="cb am" style="top:222px;height:85px;border:1px solid #BA7517">
+                  <div style="font-size:9px;font-weight:500">ENG101 ⚠</div>
+                  <div style="font-size:8px;opacity:.8">Kỹ năng viết</div>
+                  <div style="font-size:8px;opacity:.65">13:00–15:00 · Tòa B</div>
+                  <div style="font-size:7px;opacity:.7;margin-top:3px">← 30 phút từ PHY101</div>
+                </div>
+              </div>
+
+              <!-- WEDNESDAY — time conflict -->
+              <div style="position:relative;height:396px;border-left:0.5px solid var(--color-border-tertiary);background:rgba(252,235,235,.3)">
+                <div style="position:absolute;top:44px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:88px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:132px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:176px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:220px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:264px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:308px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:352px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <!-- Conflict blocks: MATH201 (T.Tư 10:00–11:30) vs CS-TG02 (T.Tư 10:00–11:30) -->
+                <div class="cb re" style="top:90px;height:62px;left:2px;right:50%">
+                  <div style="font-size:9px;font-weight:500">MATH201</div>
+                  <div style="font-size:8px;opacity:.8">Giải tích II</div>
+                  <div style="font-size:8px;opacity:.65">10:00–11:30</div>
+                </div>
+                <div class="cb re" style="top:90px;height:62px;left:50%;right:2px">
+                  <div style="font-size:9px;font-weight:500">CS-TG02</div>
+                  <div style="font-size:8px;opacity:.8">Toán rời rạc</div>
+                  <div style="font-size:8px;opacity:.65">10:00–11:30</div>
+                </div>
+              </div>
+
+              <!-- THURSDAY -->
+              <div style="position:relative;height:396px;border-left:0.5px solid var(--color-border-tertiary)">
+                <div style="position:absolute;top:44px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:88px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:132px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:176px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:220px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:264px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:308px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:352px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+              </div>
+
+              <!-- FRIDAY -->
+              <div style="position:relative;height:396px;border-left:0.5px solid var(--color-border-tertiary)">
+                <div style="position:absolute;top:44px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:88px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:132px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:176px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:220px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:264px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:308px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+                <div style="position:absolute;top:352px;left:0;right:0;border-top:0.5px solid var(--color-border-tertiary)"></div>
+              </div>
+
+            </div>
+          </div>
+
+          <!-- Legend -->
+          <div style="display:flex;gap:10px;margin-top:8px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--color-text-secondary)"><div style="width:8px;height:8px;border-radius:2px;background:#B5D4F4"></div>CS</div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--color-text-secondary)"><div style="width:8px;height:8px;border-radius:2px;background:#CECBF6"></div>Toán</div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--color-text-secondary)"><div style="width:8px;height:8px;border-radius:2px;background:#9FE1CB"></div>Vật lý</div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--color-text-secondary)"><div style="width:8px;height:8px;border-radius:2px;background:#FAC775;border:1px solid #BA7517"></div>Cảnh báo địa điểm</div>
+            <div style="display:flex;align-items:center;gap:4px;font-size:10px;color:var(--color-text-secondary)"><div style="width:8px;height:8px;border-radius:2px;background:#F7C1C1;border:1px solid #E24B4A"></div>Xung đột giờ</div>
+          </div>
+        </div>
+
+        <!-- SUGGESTION PANEL -->
+        <div class="sp">
+          <div style="padding:9px 11px;border-bottom:0.5px solid var(--color-border-tertiary);display:flex;align-items:center;justify-content:space-between">
+            <span style="font-size:11px;font-weight:500">Phương án gợi ý</span>
+            <span style="background:#E6F1FB;color:#185FA5;font-size:9px;padding:1px 5px;border-radius:7px">3 phương án</span>
+          </div>
+
+          <div class="sc" onclick="applySug(this)">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+              <span style="font-size:11px;font-weight:500">Phương án A</span>
+              <span style="font-size:10px;color:#27500A;font-weight:500;background:#EAF3DE;padding:1px 5px;border-radius:5px">97%</span>
+            </div>
+            <div class="sb-bar"><div class="sb-fill" style="width:97%"></div></div>
+            <div style="margin-bottom:5px"><span class="tag tg">Học sáng</span><span class="tag tb2">Ít đi lại</span><span class="tag tg">0 xung đột</span></div>
+            <div class="mc">
+              <div class="mc-c" style="background:#B5D4F4"></div><div class="mc-c"></div><div class="mc-c" style="background:#B5D4F4"></div><div class="mc-c"></div><div class="mc-c" style="background:#C0DD97"></div>
+              <div class="mc-c"></div><div class="mc-c" style="background:#9FE1CB"></div><div class="mc-c"></div><div class="mc-c" style="background:#9FE1CB"></div><div class="mc-c"></div>
+              <div class="mc-c" style="background:#CECBF6"></div><div class="mc-c"></div><div class="mc-c" style="background:#CECBF6"></div><div class="mc-c"></div><div class="mc-c" style="background:#C0DD97"></div>
+            </div>
+            <div style="display:flex;gap:4px">
+              <button class="bs" style="flex:1;font-size:10px" onclick="event.stopPropagation();showToast()">Lưu</button>
+              <button class="bs bp" style="flex:1;font-size:10px" onclick="event.stopPropagation()">Áp dụng</button>
+            </div>
+          </div>
+
+          <div class="sc">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+              <span style="font-size:11px;font-weight:500">Phương án B</span>
+              <span style="font-size:10px;color:#854F0B;font-weight:500;background:#FAEEDA;padding:1px 5px;border-radius:5px">84%</span>
+            </div>
+            <div class="sb-bar"><div class="sb-fill" style="width:84%;background:#EF9F27"></div></div>
+            <div style="margin-bottom:5px"><span class="tag ta">Ít tiết trống</span><span class="tag tb2">T.Sáu nghỉ</span></div>
+            <div class="mc">
+              <div class="mc-c" style="background:#B5D4F4"></div><div class="mc-c" style="background:#9FE1CB"></div><div class="mc-c" style="background:#B5D4F4"></div><div class="mc-c" style="background:#9FE1CB"></div><div class="mc-c"></div>
+              <div class="mc-c"></div><div class="mc-c" style="background:#FAC775"></div><div class="mc-c" style="background:#CECBF6"></div><div class="mc-c" style="background:#FAC775"></div><div class="mc-c"></div>
+              <div class="mc-c" style="background:#CECBF6"></div><div class="mc-c" style="background:#C0DD97"></div><div class="mc-c" style="background:#CECBF6"></div><div class="mc-c" style="background:#C0DD97"></div><div class="mc-c"></div>
+            </div>
+            <div style="display:flex;gap:4px">
+              <button class="bs" style="flex:1;font-size:10px">Lưu</button>
+              <button class="bs bp" style="flex:1;font-size:10px">Áp dụng</button>
+            </div>
+          </div>
+
+          <div class="sc">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:3px">
+              <span style="font-size:11px;font-weight:500">Phương án C</span>
+              <span style="font-size:10px;color:#A32D2D;font-weight:500;background:#FCEBEB;padding:1px 5px;border-radius:5px">71%</span>
+            </div>
+            <div class="sb-bar"><div class="sb-fill" style="width:71%;background:#E24B4A"></div></div>
+            <div style="margin-bottom:5px"><span class="tag ta">Ít tiết trống</span></div>
+            <div class="mc">
+              <div class="mc-c" style="background:#B5D4F4"></div><div class="mc-c" style="background:#9FE1CB"></div><div class="mc-c" style="background:#CECBF6"></div><div class="mc-c" style="background:#9FE1CB"></div><div class="mc-c" style="background:#C0DD97"></div>
+              <div class="mc-c" style="background:#CECBF6"></div><div class="mc-c"></div><div class="mc-c"></div><div class="mc-c"></div><div class="mc-c" style="background:#C0DD97"></div>
+              <div class="mc-c" style="background:#FAC775"></div><div class="mc-c" style="background:#FAC775"></div><div class="mc-c"></div><div class="mc-c"></div><div class="mc-c"></div>
+            </div>
+            <div style="display:flex;gap:4px">
+              <button class="bs" style="flex:1;font-size:10px">Lưu</button>
+              <button class="bs bp" style="flex:1;font-size:10px">Áp dụng</button>
+            </div>
+          </div>
+
+          <div style="padding:8px 11px">
+            <button class="bs" style="width:100%;font-size:10px;text-align:center" onclick="sw('sugg',document.querySelectorAll('.stab')[2])">Xem tất cả →</button>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ━━━ SCREEN 2 SUGGESTIONS ━━━ -->
+<div id="s-sugg" class="screen">
+  <div class="al">
+    <aside class="sb">
+      <div style="padding:10px 13px 10px;border-bottom:0.5px solid var(--color-border-tertiary)">
+        <div style="font-size:14px;font-weight:500">Tempo</div>
+        <div style="font-size:10px;color:var(--color-text-tertiary)">Tạo phương án</div>
+      </div>
+      <div style="padding:10px 13px;flex:1">
+        <div style="font-size:10px;color:var(--color-text-secondary);font-weight:500;margin-bottom:8px">Cấu hình</div>
+        <div style="margin-bottom:9px">
+          <div style="font-size:10px;color:var(--color-text-tertiary);margin-bottom:2px">Ngành học</div>
+          <div style="font-size:11px;font-weight:500">Khoa học Máy tính</div>
+        </div>
+        <div style="margin-bottom:9px">
+          <div style="font-size:10px;color:var(--color-text-tertiary);margin-bottom:2px">Tín chỉ cần học</div>
+          <div style="font-size:11px;font-weight:500">18 tín chỉ</div>
+        </div>
+        <div style="margin-bottom:10px">
+          <div style="font-size:10px;color:var(--color-text-tertiary);margin-bottom:4px">Ưu tiên</div>
+          <span class="tag tg">Học sáng</span><span class="tag tb2">Ít di chuyển</span>
+        </div>
+        <button class="bs bp" style="width:100%;font-size:11px;padding:6px">Tạo lại gợi ý</button>
+      </div>
+    </aside>
+    <main class="ma">
+      <div class="tb">
+        <div style="font-size:12px;font-weight:500;flex:1">Gợi ý phương án — 12 kết quả</div>
+        <span style="font-size:10px;color:var(--color-text-secondary)">Sắp xếp: Điểm tối ưu</span>
+      </div>
+      <div style="padding:10px;display:grid;grid-template-columns:repeat(3,1fr);gap:8px;overflow-y:auto">
+
+        <div style="border:2px solid #85B7EB;border-radius:var(--border-radius-lg);padding:11px;background:var(--color-background-primary);position:relative">
+          <div style="position:absolute;top:-1px;left:10px;background:#378ADD;color:#fff;font-size:9px;padding:1px 7px;border-radius:0 0 5px 5px">Tốt nhất</div>
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-top:9px;margin-bottom:5px">
+            <span style="font-size:12px;font-weight:500">Phương án A</span>
+            <span style="font-size:10px;color:#27500A;font-weight:500;background:#EAF3DE;padding:1px 5px;border-radius:5px">97%</span>
+          </div>
+          <div style="margin-bottom:5px"><span class="tag tg">Học sáng</span><span class="tag tb2">Ít đi lại</span><span class="tag tg">0 xung đột</span></div>
+          <div class="mc" style="height:50px"><div class="mc-c" style="background:#B5D4F4;height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="background:#B5D4F4;height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="background:#C0DD97;height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="background:#9FE1CB;height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="background:#9FE1CB;height:auto"></div><div class="mc-c" style="background:#CECBF6;height:auto"></div></div>
+          <div style="font-size:10px;color:var(--color-text-secondary);margin-top:6px">5 môn · 15 tín · 0 xung đột</div>
+          <div style="display:flex;gap:5px;margin-top:7px"><button class="bs" style="flex:1;font-size:10px" onclick="showToast()">Lưu</button><button class="bs bp" style="flex:1;font-size:10px">Áp dụng</button></div>
+        </div>
+
+        <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:11px;background:var(--color-background-primary)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><span style="font-size:12px;font-weight:500">Phương án B</span><span style="font-size:10px;color:#854F0B;font-weight:500;background:#FAEEDA;padding:1px 5px;border-radius:5px">84%</span></div>
+          <div style="margin-bottom:5px"><span class="tag ta">Ít tiết trống</span><span class="tag tb2">T.Sáu nghỉ</span></div>
+          <div class="mc" style="height:50px"><div class="mc-c" style="background:#B5D4F4;height:auto"></div><div class="mc-c" style="background:#9FE1CB;height:auto"></div><div class="mc-c" style="background:#B5D4F4;height:auto"></div><div class="mc-c" style="background:#9FE1CB;height:auto"></div><div class="mc-c"></div>
+              <div class="mc-c"></div><div class="mc-c" style="background:#FAC775"></div><div class="mc-c" style="background:#CECBF6"></div><div class="mc-c" style="background:#FAC775"></div><div class="mc-c"></div>
+              <div class="mc-c" style="background:#CECBF6"></div><div class="mc-c" style="background:#C0DD97"></div><div class="mc-c" style="background:#CECBF6"></div><div class="mc-c" style="background:#C0DD97"></div><div class="mc-c"></div>
+            </div>
+          <div style="display:flex;gap:4px;margin-top:7px"><button class="bs" style="flex:1;font-size:10px">Lưu</button>
+            <button class="bs bp" style="flex:1;font-size:10px">Áp dụng</button>
+          </div>
+        </div>
+
+        <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-lg);padding:11px;background:var(--color-background-primary)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px"><span style="font-size:12px;font-weight:500">Phương án C</span><span style="font-size:10px;color:#A32D2D;font-weight:500;background:#FCEBEB;padding:1px 5px;border-radius:5px">71%</span></div>
+          <div style="margin-bottom:5px"><span class="tag ta">Ít tiết trống</span></div>
+          <div class="mc" style="height:50px"><div class="mc-c" style="background:#B5D4F4;height:auto"></div><div class="mc-c" style="background:#9FE1CB;height:auto"></div><div class="mc-c" style="background:#CECBF6;height:auto"></div><div class="mc-c" style="background:#9FE1CB;height:auto"></div><div class="mc-c" style="background:#C0DD97"></div>
+              <div class="mc-c" style="background:#CECBF6"></div><div class="mc-c"></div><div class="mc-c"></div><div class="mc-c"></div><div class="mc-c" style="background:#C0DD97"></div>
+              <div class="mc-c" style="background:#FAC775"></div><div class="mc-c" style="background:#FAC775"></div><div class="mc-c"></div><div class="mc-c"></div><div class="mc-c"></div>
+            </div>
+          <div style="display:flex;gap:4px;margin-top:7px"><button class="bs" style="flex:1;font-size:10px">Lưu</button>
+            <button class="bs bp" style="flex:1;font-size:10px">Áp dụng</button>
+          </div>
+        </div>
+
+        <div style="padding:8px 11px">
+          <button class="bs" style="width:100%;font-size:10px;text-align:center" onclick="sw('sugg',document.querySelectorAll('.stab')[2])">Xem tất cả →</button>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ━━━ SCREEN 3 SAVED ━━━ -->
+<div id="s-save" class="screen">
+  <div class="al">
+    <aside class="sb">
+      <div style="padding:10px 13px 10px;border-bottom:0.5px solid var(--color-border-tertiary)">
+        <div style="font-size:14px;font-weight:500">Tempo</div>
+        <div style="font-size:10px;color:var(--color-text-tertiary)">Lịch đã lưu</div>
+      </div>
+      <div style="padding:10px 13px;flex:1">
+        <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:8px">3 phương án đã lưu</div>
+        <button class="bs" style="width:100%;margin-bottom:5px;font-size:10px" id="cmpbtn" onclick="toggleCmp()">So sánh 2 lịch</button>
+        <button class="bs" style="width:100%;font-size:10px">Xuất file .ics</button>
+      </div>
+    </aside>
+    <main class="ma">
+      <div class="tb">
+        <div style="font-size:12px;font-weight:500;flex:1">Lịch học đã lưu</div>
+        <button class="bs bp" onclick="sw('sugg',document.querySelectorAll('.stab')[2])">+ Phương án mới</button>
+      </div>
+      <div style="padding:10px;overflow-y:auto">
+
+        <!-- Normal view -->
+        <div id="sv-grid" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px">
+          <div class="sv-card">
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px">
+              <input type="text" value="Lịch chính thức HK1" style="border:none;background:transparent;font-size:12px;font-weight:500;flex:1;color:var(--color-text-primary);font-family:var(--font-sans);outline:none" readonly onclick="this.removeAttribute('readonly')">
+              <span style="font-size:9px;background:#EAF3DE;color:#27500A;padding:1px 5px;border-radius:5px;flex-shrink:0">Đang dùng</span>
+            </div>
+            <div style="font-size:9px;color:var(--color-text-tertiary);margin-bottom:6px">15:42 · 22/04/2025</div>
+            <div class="mc" style="height:44px;margin-bottom:6px"><div class="mc-c" style="background:#B5D4F4;height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="background:#B5D4F4;height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="background:#C0DD97;height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="background:#9FE1CB;height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="background:#9FE1CB;height:auto"></div><div class="mc-c" style="background:#CECBF6;height:auto"></div></div>
+            <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:6px">5 môn · 15 tín · 0 xung đột</div>
+            <div style="display:flex;gap:3px">
+              <button class="bs" style="flex:1;font-size:10px">Xem</button>
+              <button class="bs" style="flex:1;font-size:10px" onclick="sw('shar',document.querySelectorAll('.stab')[4])">Chia sẻ</button>
+              <button class="bs" style="font-size:10px;color:#A32D2D;border-color:#F09595">Xóa</button>
+            </div>
+          </div>
+
+          <div class="sv-card">
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px">
+              <input type="text" value="Lịch dự phòng A" style="border:none;background:transparent;font-size:12px;font-weight:500;flex:1;color:var(--color-text-primary);font-family:var(--font-sans);outline:none" readonly onclick="this.removeAttribute('readonly')">
+            </div>
+            <div style="font-size:9px;color:var(--color-text-tertiary);margin-bottom:6px">14:21 · 21/04/2025</div>
+            <div class="mc" style="height:44px;margin-bottom:6px"><div class="mc-c" style="background:#B5D4F4;height:auto"></div><div class="mc-c" style="background:#9FE1CB;height:auto"></div><div class="mc-c" style="background:#B5D4F4;height:auto"></div><div class="mc-c" style="background:#9FE1CB;height:auto"></div><div class="mc-c"></div><div class="mc-c" style="background:#CECBF6;height:auto"></div><div class="mc-c" style="background:#FAC775;height:auto"></div><div class="mc-c" style="background:#CECBF6;height:auto"></div><div class="mc-c" style="background:#FAC775;height:auto"></div><div class="mc-c" style="height:auto"></div></div>
+            <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:6px">5 môn · 14 tín · 0 xung đột</div>
+            <div style="display:flex;gap:3px">
+              <button class="bs" style="flex:1;font-size:10px">Xem</button>
+              <button class="bs" style="flex:1;font-size:10px">Chia sẻ</button>
+              <button class="bs" style="font-size:10px;color:#A32D2D;border-color:#F09595">Xóa</button>
+            </div>
+          </div>
+
+          <div class="sv-card">
+            <div style="display:flex;align-items:center;gap:5px;margin-bottom:6px">
+              <input type="text" value="Lịch GV ưa thích" style="border:none;background:transparent;font-size:12px;font-weight:500;flex:1;color:var(--color-text-primary);font-family:var(--font-sans);outline:none" readonly onclick="this.removeAttribute('readonly')">
+            </div>
+            <div style="font-size:9px;color:var(--color-text-tertiary);margin-bottom:6px">11:08 · 20/04/2025</div>
+            <div class="mc" style="height:44px;margin-bottom:6px"><div class="mc-c" style="background:#CECBF6;height:auto"></div><div class="mc-c" style="background:#9FE1CB;height:auto"></div><div class="mc-c" style="background:#CECBF6;height:auto"></div><div class="mc-c" style="background:#9FE1CB;height:auto"></div><div class="mc-c" style="background:#C0DD97;height:auto"></div><div class="mc-c" style="background:#B5D4F4;height:auto"></div><div class="mc-c" style="background:#FAC775;height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="background:#C0DD97;height:auto"></div></div>
+            <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:6px">6 môn · 18 tín · 1 cảnh báo</div>
+            <div style="display:flex;gap:3px">
+              <button class="bs" style="flex:1;font-size:10px">Xem</button>
+              <button class="bs" style="flex:1;font-size:10px">Chia sẻ</button>
+              <button class="bs" style="font-size:10px;color:#A32D2D;border-color:#F09595">Xóa</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Compare view -->
+        <div id="sv-cmp" style="display:none">
+          <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:8px">So sánh: Lịch chính thức HK1 vs Lịch dự phòng A</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+            <div style="border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:11px">
+              <div style="font-size:12px;font-weight:500;margin-bottom:6px;color:#185FA5">Lịch chính thức HK1</div>
+              <div class="mc" style="height:70px;margin-bottom:8px"><div class="mc-c" style="background:#B5D4F4;height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="background:#B5D4F4;height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="background:#C0DD97;height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="background:#9FE1CB;height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="background:#9FE1CB;height:auto"></div><div class="mc-c" style="background:#CECBF6;height:auto"></div><div class="mc-c" style="background:#CECBF6;height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="background:#CECBF6;height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="background:#C0DD97;height:auto"></div></div>
+              <table style="width:100%;font-size:10px">
+                <tr><td style="color:var(--color-text-tertiary);padding:3px 0">Tiết trống</td><td style="text-align:right;font-weight:500;color:#27500A">2 tiết</td></tr>
+                <tr><td style="color:var(--color-text-tertiary);padding:3px 0">Ca học</td><td style="text-align:right;font-weight:500">Buổi sáng</td></tr>
+                <tr><td style="color:var(--color-text-tertiary);padding:3px 0">Di chuyển</td><td style="text-align:right;font-weight:500;color:#27500A">Ít</td></tr>
+                <tr><td style="color:var(--color-text-tertiary);padding:3px 0">Xung đột</td><td style="text-align:right;font-weight:500;color:#27500A">0</td></tr>
+              </table>
+            </div>
+            <div style="border:0.5px solid var(--color-border-secondary);border-radius:var(--border-radius-lg);padding:11px">
+              <div style="font-size:12px;font-weight:500;margin-bottom:6px;color:#185FA5">Lịch dự phòng A</div>
+              <div class="mc" style="height:70px;margin-bottom:8px"><div class="mc-c" style="background:#B5D4F4;height:auto"></div><div class="mc-c" style="background:#9FE1CB;height:auto"></div><div class="mc-c" style="background:#B5D4F4;height:auto"></div><div class="mc-c" style="background:#9FE1CB;height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="background:#CECBF6;height:auto"></div><div class="mc-c" style="background:#FAC775;height:auto"></div><div class="mc-c" style="background:#CECBF6;height:auto"></div><div class="mc-c" style="background:#FAC775;height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="background:#C0DD97;height:auto"></div><div class="mc-c" style="height:auto"></div><div class="mc-c" style="background:#C0DD97;height:auto"></div><div class="mc-c" style="height:auto"></div></div>
+              <table style="width:100%;font-size:10px">
+                <tr><td style="color:var(--color-text-tertiary);padding:3px 0">Tiết trống</td><td style="text-align:right;font-weight:500;color:#A32D2D">5 tiết</td></tr>
+                <tr><td style="color:var(--color-text-tertiary);padding:3px 0">Ca học</td><td style="text-align:right;font-weight:500">Sáng + Chiều</td></tr>
+                <tr><td style="color:var(--color-text-tertiary);padding:3px 0">Di chuyển</td><td style="text-align:right;font-weight:500;color:#854F0B">Trung bình</td></tr>
+                <tr><td style="color:var(--color-text-tertiary);padding:3px 0">Xung đột</td><td style="text-align:right;font-weight:500;color:#27500A">0</td></tr>
+              </table>
+            </div>
+          </div>
+          <div style="margin-top:8px;padding:8px 10px;background:var(--color-background-secondary);border-radius:var(--border-radius-md);font-size:11px;color:var(--color-text-secondary)">
+            Kết luận: <strong style="color:var(--color-text-primary)">Lịch chính thức HK1</strong> tối ưu hơn về số tiết trống và quãng đường di chuyển.
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- ━━━ SCREEN 4 SHARE ━━━ -->
+<div id="s-shar" class="screen">
+  <div class="mg-bg">
+    <div class="mg">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
+        <div>
+          <div style="font-size:14px;font-weight:500">Chia sẻ thời khóa biểu</div>
+          <div style="font-size:10px;color:var(--color-text-secondary);margin-top:2px">Lịch chính thức HK1 · Nguyễn Văn An</div>
+        </div>
+        <button class="bs" onclick="sw('dash',document.querySelectorAll('.stab')[1])" style="font-size:14px;border:none;padding:3px 7px;line-height:1">✕</button>
+      </div>
+
+      <div style="margin-bottom:12px">
+        <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:5px;font-weight:500">Link chia sẻ</div>
+        <div style="display:flex;gap:5px">
+          <div style="flex:1;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:6px 8px;font-size:10px;color:var(--color-text-tertiary);overflow:hidden;white-space:nowrap;text-overflow:ellipsis">tempo.app/s/nguyenvanan-hk1-2025</div>
+          <button class="bs bp" style="font-size:10px;flex-shrink:0" id="cpbtn" onclick="cpLink()">Sao chép</button>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:14px;margin-bottom:12px">
+        <div>
+          <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:5px;font-weight:500">QR Code</div>
+          <div style="width:76px;height:76px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:7px;display:flex;flex-direction:column;gap:2px;overflow:hidden">
+            <div style="display:flex;gap:2px"><div style="flex:1;background:var(--color-text-primary);border-radius:1px;height:9px"></div><div style="flex:.4;height:9px"></div><div style="flex:.4;background:var(--color-text-primary);border-radius:1px;height:9px"></div></div>
+            <div style="display:flex;gap:2px;height:4px"><div style="flex:.3;background:var(--color-text-primary);border-radius:1px"></div><div style="flex:.3;height:4px"></div><div style="flex:.3;background:var(--color-text-primary);border-radius:1px"></div><div style="flex:.3;height:4px"></div><div style="flex:.3;background:var(--color-text-primary);border-radius:1px"></div></div>
+            <div style="display:flex;gap:2px"><div style="flex:1;background:var(--color-text-primary);border-radius:1px;height:9px"></div><div style="flex:.4;height:9px"></div><div style="flex:.4;background:var(--color-text-primary);border-radius:1px;height:9px"></div></div>
+          </div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:7px;font-weight:500">Quyền xem</div>
+          <div style="display:flex;flex-direction:column;gap:5px">
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer"><input type="radio" name="pr" checked> Chỉ xem</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer"><input type="radio" name="pr"> Xem + Nhận xét</label>
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;cursor:pointer"><input type="checkbox"> Highlight tiết trùng nhau</label>
+          </div>
+        </div>
+      </div>
+
+      <div style="border-top:0.5px solid var(--color-border-tertiary);padding-top:10px;margin-bottom:12px">
+        <div style="font-size:10px;color:var(--color-text-secondary);margin-bottom:7px;font-weight:500">Chia sẻ cho bạn bè</div>
+        <div style="display:flex;gap:5px;flex-wrap:wrap">
+          <div style="display:flex;align-items:center;gap:4px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:20px;padding:4px 9px;font-size:11px"><div style="width:18px;height:18px;border-radius:50%;background:#B5D4F4;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:500;color:#0C447C">MH</div>Minh Huy</div>
+          <div style="display:flex;align-items:center;gap:4px;background:var(--color-background-secondary);border:0.5px solid var(--color-border-tertiary);border-radius:20px;padding:4px 9px;font-size:11px"><div style="width:18px;height:18px;border-radius:50%;background:#9FE1CB;display:flex;align-items:center;justify-content:center;font-size:8px;font-weight:500;color:#085041">TL</div>Thanh Lan</div>
+          <div style="display:flex;align-items:center;gap:4px;background:transparent;border:0.5px dashed var(--color-border-tertiary);border-radius:20px;padding:4px 9px;font-size:11px;cursor:pointer;color:var(--color-text-secondary)">+ Thêm</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:6px">
+        <button class="bs" style="flex:1" onclick="sw('dash',document.querySelectorAll('.stab')[1])">Hủy</button>
+        <button class="bs bp" style="flex:1">Gửi chia sẻ</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ━━━ SCREEN 5 FILTER + CONFLICT ━━━ -->
+<div id="s-filt" class="screen">
+  <div class="al">
+    <aside class="sb">
+      <div style="padding:10px 13px 10px;border-bottom:0.5px solid var(--color-border-tertiary)">
+        <div style="font-size:14px;font-weight:500">Bộ lọc lớp</div>
+        <div style="font-size:10px;color:var(--color-text-tertiary)">Lọc theo yêu cầu</div>
+      </div>
+      <div style="padding:10px 13px;overflow-y:auto;flex:1">
+        <div class="filter-section">
+          <div style="font-size:10px;font-weight:500;color:var(--color-text-secondary);margin-bottom:7px">Thời gian</div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox" checked onchange="filterClasses()"> Sáng (7–12h)</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox" onchange="filterClasses()"> Chiều (13–17h)</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox" onchange="filterClasses()"> Tối (18–21h)</label>
+          </div>
+        </div>
+        <div class="filter-section">
+          <div style="font-size:10px;font-weight:500;color:var(--color-text-secondary);margin-bottom:7px">Tòa</div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox" checked onchange="filterClasses()"> Tòa A</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox" checked onchange="filterClasses()"> Tòa B</label>
+          </div>
+        </div>
+        <div class="filter-section">
+          <div style="font-size:10px;font-weight:500;color:var(--color-text-secondary);margin-bottom:7px">Ngày nghỉ</div>
+          <div style="display:flex;flex-direction:column;gap:4px">
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox" class="dayoff-filter"> Thứ Hai</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox" class="dayoff-filter"> Thứ Ba</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox" class="dayoff-filter"> Thứ Tư</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox" class="dayoff-filter"> Thứ Năm</label>
+            <label style="display:flex;align-items:center;gap:5px;font-size:11px;cursor:pointer"><input type="checkbox" class="dayoff-filter"> Thứ Sáu</label>
+          </div>
+        </div>
+        <button class="bs bp" style="width:100%;font-size:10px;padding:5px;margin-bottom:4px">Áp dụng</button>
+        <button class="bs" style="width:100%;font-size:10px;padding:5px">Đặt lại</button>
+      </div>
+    </aside>
+
+    <main class="ma">
+      <div class="tb">
+        <div style="font-size:12px;font-weight:500;flex:1">Xung đột &amp; Cảnh báo</div>
+        <button class="bs" onclick="sw('dash',document.querySelectorAll('.stab')[1])">Về Dashboard</button>
+      </div>
+      <div style="padding:10px;overflow-y:auto">
+
+        <div style="font-size:11px;font-weight:500;margin-bottom:7px">Tổng hợp xung đột (2)</div>
+
+        <!-- Conflict 1: Time -->
+        <div style="border:0.5px solid #F09595;border-left:3px solid #E24B4A;border-radius:var(--border-radius-md);padding:9px 11px;margin-bottom:8px;background:#FCEBEB">
+          <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+            <span style="background:#E24B4A;color:#fff;font-size:9px;padding:1px 5px;border-radius:3px">Trùng giờ</span>
+            <span style="font-size:11px;font-weight:500;color:#791F1F">Thứ Tư · 10:00–11:30</span>
+          </div>
+          <div style="font-size:10px;color:#A32D2D;margin-bottom:7px">MATH201 (Giải tích II) và CS-TG02 (Toán rời rạc) trùng hoàn toàn. Cần bỏ hoặc đổi 1 trong 2 lớp.</div>
+          <div style="display:flex;gap:6px;margin-bottom:7px">
+            <div style="flex:1;background:rgba(255,255,255,.7);border:0.5px solid #F09595;border-radius:var(--border-radius-md);padding:6px 8px">
+              <div style="font-size:9px;color:var(--color-text-tertiary)">Lớp A</div>
+              <div style="font-size:10px;font-weight:500">MATH201 · LT01</div>
+            </div>
+            <div style="display:flex;align-items:center;font-size:10px;color:#A32D2D;font-weight:500">vs</div>
+            <div style="flex:1;background:rgba(255,255,255,.7);border:0.5px solid #F09595;border-radius:var(--border-radius-md);padding:6px 8px">
+              <div style="font-size:9px;color:var(--color-text-tertiary)">Lớp B</div>
+              <div style="font-size:10px;font-weight:500">CS-TG02 · L04</div>
+            </div>
+          </div>
+          <div style="display:flex;gap:5px">
+            <button class="bs" style="flex:1;font-size:10px">Đổi lớp MATH201</button>
+            <button class="bs" style="flex:1;font-size:10px">Đổi lớp CS-TG02</button>
+            <button class="bs bd" style="font-size:10px">Bỏ môn</button>
+          </div>
+        </div>
+
+        <!-- Conflict 2: Location (< 10 min gap) -->
+        <div style="border:0.5px solid #FAC775;border-left:3px solid #BA7517;border-radius:var(--border-radius-md);padding:9px 11px;margin-bottom:14px;background:#FAEEDA">
+          <div style="display:flex;align-items:center;gap:7px;margin-bottom:5px">
+            <span style="background:#BA7517;color:#fff;font-size:9px;padding:1px 5px;border-radius:3px">Khoảng cách địa điểm &lt; 10 phút</span>
+            <span style="font-size:11px;font-weight:500;color:#633806">Thứ Ba · 12:30→13:00</span>
+          </div>
+          <div style="font-size:10px;color:#854F0B;margin-bottom:7px"><strong>PHY101 (9:00–10:30)</strong> tại <strong>Tòa A</strong> → <strong>ENG101 (13:00–15:00)</strong> tại <strong>Tòa B</strong>.<br>Khoảng cách: Tòa A ↔ Tòa B ≈ 500m. Thời gian di chuyển ước tính 15–20 phút.<br><strong style="color:#633806">⚠ Chỉ có 30 phút — không đủ thời gian!</strong></div>
+          <div style="display:flex;gap:5px">
+            <button class="bs" style="flex:1;font-size:10px;border-color:#FAC775;color:#633806">Tìm ENG101 khác</button>
+            <button class="bs" style="flex:1;font-size:10px;border-color:#FAC775;color:#633806">Tìm PHY101 tòa B</button>
+            <button class="bs bd" style="font-size:10px">Bỏ 1 trong 2</button>
+          </div>
+        </div>
+
+        <!-- Course recommendations & Class selection -->
+        <div style="font-size:11px;font-weight:500;margin-bottom:7px">Chọn lớp học cho từng môn</div>
+        <div id="classSelectionContainer" style="display:grid;gap:12px">
+          <!-- Populated by JavaScript -->
+        </div>
+
+        <div style="border-top:0.5px solid var(--color-border-tertiary);margin-top:14px;padding-top:14px">
+          <div style="font-size:11px;font-weight:500;margin-bottom:7px">Môn học đề xuất cho học kỳ này</div>
+          <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:7px">
+            <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:9px">
+              <div style="font-size:11px;font-weight:500">CS401 · CSDL</div>
+              <div style="font-size:9px;color:var(--color-text-tertiary);margin-bottom:3px">3 tín · Bắt buộc · HK5</div>
+              <span class="tag tg" style="font-size:9px">Còn chỗ</span><span class="tag tb2" style="font-size:9px">Phù hợp lịch</span>
+              <button class="bs bp" style="display:block;width:100%;font-size:10px;margin-top:6px;padding:3px">Thêm vào lịch</button>
+            </div>
+            <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:9px">
+              <div style="font-size:11px;font-weight:500">SE301 · KTPM</div>
+              <div style="font-size:9px;color:var(--color-text-tertiary);margin-bottom:3px">3 tín · Tự chọn</div>
+              <span class="tag tg" style="font-size:9px">Còn chỗ</span><span class="tag ta" style="font-size:9px">Khó</span>
+              <button class="bs" style="display:block;width:100%;font-size:10px;margin-top:6px;padding:3px">Thêm vào lịch</button>
+            </div>
+            <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:9px;opacity:.55">
+              <div style="font-size:11px;font-weight:500">MATH301 · XS-TK</div>
+              <div style="font-size:9px;color:var(--color-text-tertiary);margin-bottom:3px">3 tín · Bắt buộc</div>
+              <span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:500;background:#FCEBEB;color:#791F1F">Xung đột giờ</span>
+            </div>
+            <div style="border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:9px;opacity:.55">
+              <div style="font-size:11px;font-weight:500">CS-AI01 · AI căn bản</div>
+              <div style="font-size:9px;color:var(--color-text-tertiary);margin-bottom:3px">3 tín · Tự chọn</div>
+              <span style="display:inline-block;padding:1px 6px;border-radius:8px;font-size:9px;font-weight:500;background:var(--color-background-secondary);color:var(--color-text-tertiary)">Lớp đã đầy (40/40)</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </main>
+  </div>
+</div>
+
+<!-- Toast -->
+<div id="tst" style="display:none;margin-top:8px;padding:8px 12px;background:#EAF3DE;border:0.5px solid #C0DD97;border-radius:var(--border-radius-md);font-size:11px;color:#27500A">Đã lưu phương án thành công!</div>
+
+<script>
+let allClasses = [];
+let allSubjects = [];
+let selectedSubjects = new Set();
+let selectedClasses = new Set();
+
+function sw(id,btn){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('act'));
+  document.querySelectorAll('.stab').forEach(t=>t.classList.remove('on'));
+  document.getElementById('s-'+id).classList.add('act');
+  if(btn)btn.classList.add('on');
+}
+
+function showToast(msg='Thao tác thành công!'){
+  var t=document.getElementById('tst');
+  t.textContent=msg;
+  t.style.display='block';
+  setTimeout(()=>t.style.display='none',2200);
+}
+
+function cpLink(){
+  var b=document.getElementById('cpbtn');
+  b.textContent='Đã sao chép!';b.style.background='#3B6D11';b.style.borderColor='#3B6D11';
+  setTimeout(()=>{b.textContent='Sao chép';b.style.background='#378ADD';b.style.borderColor='#378ADD';},2000);
+}
+
+var cmp=false;
+function toggleCmp(){
+  cmp=!cmp;
+  document.getElementById('sv-grid').style.display=cmp?'none':'';
+  document.getElementById('sv-cmp').style.display=cmp?'block':'none';
+  document.getElementById('cmpbtn').textContent=cmp?'Thoát so sánh':'So sánh 2 lịch';
+}
+
+function applySug(el){el.style.outline='2px solid #378ADD';}
+
+function handleDragOver(e){
+  e.preventDefault();
+  e.stopPropagation();
+  document.getElementById('uploadArea').classList.add('dragover');
+}
+
+function handleDragEnd(e){
+  e.preventDefault();
+  e.stopPropagation();
+  document.getElementById('uploadArea').classList.remove('dragover');
+}
+
+function handleDrop(e){
+  e.preventDefault();
+  e.stopPropagation();
+  document.getElementById('uploadArea').classList.remove('dragover');
+  const files=e.dataTransfer.files;
+  if(files.length>0) handleFileSelect({target:{files:files}});
+}
+
+function handleFileSelect(e){
+  const file=e.target.files[0];
+  if(!file) return;
+  const reader=new FileReader();
+  reader.onload=function(event){
+    try{
+      const data=new Uint8Array(event.target.result);
+      const workbook=XLSX.read(data,{type:'array'});
+      const sheetName=workbook.SheetNames[0];
+      const worksheet=workbook.Sheets[sheetName];
+      const jsonData=XLSX.utils.sheet_to_json(worksheet);
+      allClasses=[];
+      allSubjects=[];
+      const subjectMap={};
+      jsonData.forEach(row=>{
+        const maMon=row['Mã môn']||'';
+        const tenMon=row['Tên môn']||'';
+        const maLop=row['Mã lớp']||'';
+        const thu=row['Thứ']||'';
+        const gioStart=row['Giờ bắt đầu']||'';
+        const gioEnd=row['Giờ kết thúc']||'';
+        const toa=row['Tòa']||'';
+        const phong=row['Phòng']||'';
+        const siSo=row['Sỉ số / Số đăng ký']||'';
+        const tinChi=row['Tín chỉ']||3;
+        if(maMon){
+          if(!subjectMap[maMon]){
+            subjectMap[maMon]={maMon,tenMon,tinChi,lops:[]};
+            allSubjects.push(subjectMap[maMon]);
+          }
+          allClasses.push({maMon,tenMon,maLop,thu,gioStart,gioEnd,toa,phong,siSo,tinChi});
+          subjectMap[maMon].lops.push({maLop,thu,gioStart,gioEnd,toa,phong,siSo});
+        }
+      });
+      showToast('Tải file thành công!');
+      sw('select',document.querySelectorAll('.stab')[1]);
+      renderSubjects();
+    }catch(error){
+      showToast('Lỗi khi đọc file: '+error.message);
+      console.error('Error:',error);
+    }
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function renderSubjects(){
+  const list=document.getElementById('subjectList');
+  list.innerHTML='';
+  allSubjects.forEach(subject=>{
+    const div=document.createElement('div');
+    div.className='subject-item'+(selectedSubjects.has(subject.maMon)?' selected':'');
+    div.innerHTML=`<div style="font-weight:500;font-size:12px">${subject.maMon}</div><div style="font-size:10px;color:var(--color-text-secondary);margin-top:4px">${subject.tenMon}</div><div style="font-size:10px;color:var(--color-text-tertiary);margin-top:2px">${subject.tinChi} tín</div>`;
+    div.onclick=()=>{
+      if(selectedSubjects.has(subject.maMon)){
+        selectedSubjects.delete(subject.maMon);
+      }else{
+        selectedSubjects.add(subject.maMon);
+      }
+      updateSubjectStats();
+      renderSubjects();
+    };
+    list.appendChild(div);
+  });
+}
+
+function updateSubjectStats(){
+  const count=selectedSubjects.size;
+  const credits=Array.from(selectedSubjects).reduce((sum,maMon)=>{
+    const subject=allSubjects.find(s=>s.maMon===maMon);
+    return sum+(subject?subject.tinChi:0);
+  },0);
+  document.getElementById('selectedCount').textContent=count+'/'+allSubjects.length;
+  document.getElementById('totalCredits').textContent=credits+' tín';
+}
+
+function proceedToClassSelection(){
+  if(selectedSubjects.size===0){
+    showToast('Vui lòng chọn ít nhất 1 môn!');
+    return;
+  }
+  renderClasses();
+  sw('classes',null);
+}
+
+function renderClasses(){
+  const list=document.getElementById('classList');
+  list.innerHTML='';
+  const subjectMap={};
+  allClasses.filter(c=>selectedSubjects.has(c.maMon)).forEach(cls=>{
+    if(!subjectMap[cls.maMon]) subjectMap[cls.maMon]=[];
+    subjectMap[cls.maMon].push(cls);
+  });
+  Object.keys(subjectMap).forEach(maMon=>{
+    const subject=allSubjects.find(s=>s.maMon===maMon);
+    const title=document.createElement('div');
+    title.style.cssText='grid-column:1/-1;font-weight:500;font-size:12px;color:var(--color-text-primary);margin-top:12px;margin-bottom:8px';
+    title.textContent=`${maMon} - ${subject.tenMon}`;
+    list.appendChild(title);
+    subjectMap[maMon].forEach(cls=>{
+      const card=document.createElement('div');
+      card.className='class-card'+(selectedClasses.has(cls.maLop)?' selected':'');
+      const siSoParts=(cls.siSo||'0/40').split('/');
+      const registered=parseInt(siSoParts[0])||0;
+      const total=parseInt(siSoParts[1])||40;
+      const isFull=registered>=total;
+      if(isFull) card.classList.add('full');
+      card.innerHTML=`<div style="font-weight:500;font-size:11px">${cls.maLop}</div><div class="class-time">${cls.thu} · ${cls.gioStart}–${cls.gioEnd}</div><div class="class-location">${cls.toa} · ${cls.phong}</div><div style="font-size:10px;margin-top:6px">Sỉ số: <span style="font-weight:500">${cls.siSo}</span></div>${isFull?'<div class="badge-full">Lớp đầy</div>':'<div class="badge-available">Còn chỗ</div>'}`;
+      card.onclick=()=>{
+        if(!isFull){
+          if(selectedClasses.has(cls.maLop)){
+            selectedClasses.delete(cls.maLop);
+          }else{
+            selectedClasses.add(cls.maLop);
+          }
+          renderClasses();
+        }
+      };
+      list.appendChild(card);
+    });
+  });
+}
+
+function filterClasses(){
+  renderClasses();
+}
+
+const classesData={
+  'CS301':[
+    {maLop:'LT01',thu:'T.Hai',gioStart:'8:00',gioEnd:'9:30',toa:'A',phong:'B201',siSo:'38/40',tinChi:3},
+    {maLop:'LT02',thu:'T.Tư',gioStart:'10:00',gioEnd:'11:30',toa:'B',phong:'A105',siSo:'40/40',tinChi:3},
+    {maLop:'LT03',thu:'T.Năm',gioStart:'13:00',gioEnd:'14:30',toa:'A',phong:'B202',siSo:'25/40',tinChi:3}
+  ],
+  'MATH201':[
+    {maLop:'LT01',thu:'T.Hai',gioStart:'10:00',gioEnd:'11:30',toa:'A',phong:'A201',siSo:'35/40',tinChi:2},
+    {maLop:'LT02',thu:'T.Tư',gioStart:'10:00',gioEnd:'11:30',toa:'B',phong:'B101',siSo:'40/40',tinChi:2},
+    {maLop:'LT03',thu:'T.Sáu',gioStart:'9:00',gioEnd:'10:30',toa:'A',phong:'A202',siSo:'20/40',tinChi:2}
+  ],
+  'PHY101':[
+    {maLop:'LT01',thu:'T.Ba',gioStart:'9:00',gioEnd:'10:30',toa:'A',phong:'C101',siSo:'32/40',tinChi:3},
+    {maLop:'LT02',thu:'T.Năm',gioStart:'14:00',gioEnd:'15:30',toa:'B',phong:'C202',siSo:'40/40',tinChi:3},
+    {maLop:'LT03',thu:'T.Hai',gioStart:'13:00',gioEnd:'14:30',toa:'A',phong:'C103',siSo:'18/40',tinChi:3}
+  ],
+  'ENG101':[
+    {maLop:'LT01',thu:'T.Ba',gioStart:'13:00',gioEnd:'15:00',toa:'B',phong:'D101',siSo:'36/40',tinChi:3},
+    {maLop:'LT02',thu:'T.Năm',gioStart:'8:00',gioEnd:'10:00',toa:'A',phong:'D102',siSo:'40/40',tinChi:3},
+    {maLop:'LT03',thu:'T.Sáu',gioStart:'10:00',gioEnd:'12:00',toa:'B',phong:'D201',siSo:'22/40',tinChi:3}
+  ],
+  'CS201':[
+    {maLop:'LT01',thu:'T.Tư',gioStart:'14:00',gioEnd:'16:00',toa:'A',phong:'E101',siSo:'28/40',tinChi:3},
+    {maLop:'LT02',thu:'T.Ba',gioStart:'8:00',gioEnd:'10:00',toa:'B',phong:'E201',siSo:'40/40',tinChi:3},
+    {maLop:'LT03',thu:'T.Sáu',gioStart:'13:00',gioEnd:'15:00',toa:'A',phong:'E102',siSo:'15/40',tinChi:3}
+  ]
+};
+
+let selectedClassesForFilter={};
+
+function renderFilterClasses(){
+  const container=document.getElementById('classSelectionContainer');
+  container.innerHTML='';
+  const subjects=['CS301','MATH201','PHY101','ENG101','CS201'];
+  subjects.forEach(maMon=>{
+    const classes=classesData[maMon]||[];
+    const card=document.createElement('div');
+    card.style.cssText='border:0.5px solid var(--color-border-tertiary);border-radius:var(--border-radius-md);padding:11px';
+    
+    let html=`<div style="font-weight:500;font-size:11px;margin-bottom:8px">${maMon}</div><div style="display:flex;flex-direction:column;gap:6px">`;
+    
+    classes.forEach(cls=>{
+      const siSoParts=(cls.siSo||'0/40').split('/');
+      const registered=parseInt(siSoParts[0])||0;
+      const total=parseInt(siSoParts[1])||40;
+      const isFull=registered>=total;
+      const key=`${maMon}-${cls.maLop}`;
+      const isSelected=selectedClassesForFilter[key]||false;
+      
+      html+=`
+        <label style="display:flex;align-items:center;gap:6px;font-size:10px;cursor:pointer;opacity:${isFull?0.5:1};pointer-events:${isFull?'none':'auto'}">
+          <input type="checkbox" data-key="${key}" ${isSelected?'checked':''} onchange="toggleFilterClass(this)" style="cursor:pointer">
+          <span style="flex:1">
+            <strong>${cls.maLop}</strong> · ${cls.thu} ${cls.gioStart}–${cls.gioEnd}
+            <span style="display:block;font-size:9px;color:var(--color-text-tertiary);margin-top:2px">${cls.toa} · ${cls.phong} · Sỉ: ${cls.siSo}${isFull?' (Lớp đầy)':''}</span>
+          </span>
+        </label>
+      `;
+    });
+    
+    html+='</div>';
+    card.innerHTML=html;
+    container.appendChild(card);
+  });
+}
+
+function toggleFilterClass(checkbox){
+  const key=checkbox.getAttribute('data-key');
+  if(checkbox.checked){
+    selectedClassesForFilter[key]=true;
+  }else{
+    delete selectedClassesForFilter[key];
+  }
+  console.log('Lớp được bỏ:',selectedClassesForFilter);
+}
+
+document.addEventListener('DOMContentLoaded',()=>{
+  renderFilterClasses();
+  if(document.getElementById('searchSubject')){
+    document.getElementById('searchSubject').addEventListener('keyup',(e)=>{
+      const search=e.target.value.toLowerCase();
+      const items=document.querySelectorAll('.subject-item');
+      items.forEach(item=>{
+        const text=item.textContent.toLowerCase();
+        item.style.display=text.includes(search)?'':'none';
+      });
+    });
+  }
+});
+</script>
+</div>
+</body>
+</html>

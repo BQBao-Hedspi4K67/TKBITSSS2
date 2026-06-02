@@ -1,0 +1,17 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: tempo-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: rootpassword
+      MYSQL_DATABASE: tempo
+      MYSQL_USER: tempo
+      MYSQL_PASSWORD: tempo
+    ports:
+      - "3306:3306"
+    volumes:
+      - tempo_mysql_data:/var/lib/mysql
+
+volumes:
+  tempo_mysql_data:
