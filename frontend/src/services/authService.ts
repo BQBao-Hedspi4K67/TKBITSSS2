@@ -1,5 +1,5 @@
 import { request } from './api';
-import type { AuthUser, LoginResponse } from '../types/auth';
+import type { AuthUser, LoginResponse, RegisterResponse } from '../types/auth';
 
 type MeResponse = {
   user: AuthUser | null;
@@ -9,6 +9,18 @@ export async function login(login: string, password: string) {
   return request<LoginResponse>('/auth/login', {
     method: 'POST',
     body: JSON.stringify({ login, password }),
+  });
+}
+
+export async function register(input: {
+  fullName: string;
+  email: string;
+  studentCode?: string;
+  password: string;
+}) {
+  return request<RegisterResponse>('/auth/register', {
+    method: 'POST',
+    body: JSON.stringify(input),
   });
 }
 

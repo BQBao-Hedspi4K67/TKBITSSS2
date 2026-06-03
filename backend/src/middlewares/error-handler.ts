@@ -21,6 +21,13 @@ export function errorHandler(error: unknown, _req: Request, res: Response, _next
   }
 
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
+    if (error.code === 'P2002') {
+      return res.status(409).json({
+        message: 'Du lieu da ton tai',
+        code: error.code,
+      });
+    }
+
     return res.status(400).json({
       message: 'Du lieu vi pham rang buoc co so du lieu',
       code: error.code,
