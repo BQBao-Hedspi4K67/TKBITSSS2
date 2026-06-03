@@ -50,7 +50,7 @@ model User {
   role          UserRole       @default(STUDENT)
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
-  importBatches ImportBatch[]
+  currentImportBatch ImportBatch?
   selections    UserSelection[]
   schedules     Schedule[]
   sentMessages  Message[]      @relation("SentMessages")
@@ -59,8 +59,8 @@ model User {
 
 model ImportBatch {
   id               String            @id @default(cuid())
-  userId           String?
-  user             User?             @relation(fields: [userId], references: [id], onDelete: SetNull)
+  userId           String            @unique
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
   fileName         String
   mimeType         String
   sheetName        String?

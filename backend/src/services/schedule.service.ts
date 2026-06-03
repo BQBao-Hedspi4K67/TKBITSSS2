@@ -124,6 +124,16 @@ export async function saveSchedule(
   userId: string,
   input: { name: string; semester?: string; academicYear?: string; sourceBatchId?: string; sectionIds: string[] },
 ) {
+  if (input.sourceBatchId) {
+    const sourceBatch = await prisma.importBatch.findFirst({
+      where: { id: input.sourceBatchId, userId },
+    });
+
+    if (!sourceBatch) {
+      throw new HttpError(404, 'Khong tim thay batch nguon cua ban', { code: 'SOURCE_BATCH_NOT_FOUND' });
+    }
+  }
+
   const sourceItems = await prisma.importedSection.findMany({
     where: {
       id: { in: input.sectionIds },
@@ -209,6 +219,16 @@ export async function updateSchedule(
 
   if (!existingSchedule) {
     throw new HttpError(404, 'Khong tim thay lich hoc', { code: 'SCHEDULE_NOT_FOUND' });
+  }
+
+  if (input.sourceBatchId) {
+    const sourceBatch = await prisma.importBatch.findFirst({
+      where: { id: input.sourceBatchId, userId },
+    });
+
+    if (!sourceBatch) {
+      throw new HttpError(404, 'Khong tim thay batch nguon cua ban', { code: 'SOURCE_BATCH_NOT_FOUND' });
+    }
   }
 
   const sourceItems = await prisma.importedSection.findMany({
@@ -313,9 +333,9 @@ export async function deleteSchedule(userId: string, scheduleId: string) {
   return { success: true };
 }
 
-export async function getScheduleById(scheduleId: string) {
-  const schedule = await prisma.schedule.findUnique({
-    where: { id: scheduleId },
+export async function getScheduleById(userId: string, scheduleId: string) {
+  const schedule = await prisma.schedule.findFirst({
+    where: { id: scheduleId, userId },
     include: {
       items: true,
       conflicts: true,

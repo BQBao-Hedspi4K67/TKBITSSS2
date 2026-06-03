@@ -6,9 +6,9 @@ export type UserSelectionSnapshot = {
   classCode: string | null;
 };
 
-export async function getCurrentTimetable() {
+export async function getCurrentTimetable(userId: string) {
   const batch = await prisma.importBatch.findFirst({
-    orderBy: { createdAt: 'desc' },
+    where: { userId },
     include: {
       sections: true,
     },
@@ -44,7 +44,7 @@ export async function getUserSelections(userId: string) {
 }
 
 export async function replaceUserSelections(userId: string, selections: UserSelectionSnapshot[]) {
-  const currentBatch = await getCurrentTimetable();
+  const currentBatch = await getCurrentTimetable(userId);
   if (!currentBatch) {
     throw new HttpError(404, 'Chua co TKB hien tai', { code: 'CURRENT_TIMETABLE_NOT_FOUND' });
   }

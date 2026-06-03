@@ -2,7 +2,6 @@ import { ImportedSection, ImportStatus, Prisma } from '@prisma/client';
 import { prisma } from '../config/prisma';
 import { HttpError } from '../utils/http-error';
 import { parseTimetableWorkbook, type TimetableRow } from '../utils/excel';
-import { getCurrentTimetable } from './user-selection.service';
 
 export type ImportTimetableResult = {
   batch: {
@@ -70,15 +69,21 @@ export async function importTimetableFile(file: Express.Multer.File, userId?: st
     throw new HttpError(400, 'File upload khong duoc trong', { code: 'FILE_REQUIRED' });
   }
 
+  if (!userId) {
+    throw new HttpError(401, 'Ban can dang nhap de upload TKB', { code: 'UNAUTHORIZED' });
+  }
+
   const parsed = parseTimetableWorkbook(file.buffer, file.originalname);
   const grouped = groupSections(parsed.rows);
 
   const result = await prisma.$transaction(async (tx) => {
-    await tx.importBatch.deleteMany({});
+    await tx.importBatch.deleteMany({
+      where: { userId },
+    });
 
     const batch = await tx.importBatch.create({
       data: {
-        userId: userId ?? null,
+        userId,
         fileName: file.originalname,
         mimeType: file.mimetype,
         sheetName: parsed.sheetName,
@@ -167,9 +172,9 @@ export async function importTimetableFile(file: Express.Multer.File, userId?: st
   };
 }
 
-export async function getImportBatch(batchId: string) {
-  const batch = await prisma.importBatch.findUnique({
-    where: { id: batchId },
+export async function getImportBatch(batchId: string, userId: string) {
+  const batch = await prisma.importBatch.findFirst({
+    where: { id: batchId, userId },
     include: {
       sections: true,
     },

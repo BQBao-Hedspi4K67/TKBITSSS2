@@ -10,7 +10,7 @@ export async function uploadTimetableController(req: Request, res: Response, nex
       });
     }
 
-    const result = await importTimetableFile(req.file, req.user?.id);
+    const result = await importTimetableFile(req.file, req.user!.id);
     res.status(201).json(result);
   } catch (error) {
     next(error);
@@ -20,7 +20,7 @@ export async function uploadTimetableController(req: Request, res: Response, nex
 export async function getImportBatchController(req: Request, res: Response, next: NextFunction) {
   try {
     const { batchId } = req.params as { batchId: string };
-    const batch = await getImportBatch(batchId);
+    const batch = await getImportBatch(batchId, req.user!.id);
     res.json({ batch });
   } catch (error) {
     next(error);

@@ -124,7 +124,7 @@ export async function deleteShareController(req: Request, res: Response, next: N
 export async function getScheduleDetailController(req: Request, res: Response, next: NextFunction) {
   try {
     const { scheduleId } = req.params as { scheduleId: string };
-    const schedule = await getScheduleById(scheduleId);
+    const schedule = await getScheduleById(req.user!.id, scheduleId);
     res.json({ schedule });
   } catch (error) {
     next(error);
