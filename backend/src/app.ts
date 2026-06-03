@@ -12,7 +12,7 @@ app.use(helmet());
 app.use(
   cors({
     origin(origin, callback) {
-      if (!origin || env.corsOrigins.includes(origin)) {
+      if (!origin || env.corsOrigins.includes('*') || env.corsOrigins.includes(origin)) {
         callback(null, true);
         return;
       }
