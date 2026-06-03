@@ -77,6 +77,16 @@ export function ChatPanel({ currentUserId, currentUserName }: ChatPanelProps) {
 
   const selectedUser = conversations.find((c) => c.user.id === selectedUserId)?.user;
 
+  // Helper: detect if a message is a comment on a schedule share
+  // It's a comment if the message has scheduleShare attached AND content is NOT the sharing announcement
+  const isScheduleComment = (msg: ChatMessage): boolean => {
+    if (!msg.scheduleShare) return false;
+    // Regular share messages start with "📅" or "Đã chia sẻ lịch"
+    if (msg.content.startsWith('📅')) return false;
+    if (msg.content.includes('Đã chia sẻ lịch')) return false;
+    return true;
+  };
+
   return (
     <div className="tempo-chat-shell">
       {/* Conversations list */}
@@ -143,7 +153,14 @@ export function ChatPanel({ currentUserId, currentUserName }: ChatPanelProps) {
                 onSendComment={async (comment: string) => {
                   const receiver = selectedUserId;
                   if (receiver) {
-                    await sendMessage(receiver, comment);
+                    // Pass slug as scheduleShareId to link comment to schedule
+                    const response = await sendMessage(receiver, comment, viewingShare.slug);
+                    // Mark it as a schedule comment by attaching share info
+                    const commentMsg: ChatMessage = {
+                      ...response.message,
+                      // The backend already links it to the scheduleShare, so scheduleShare is present
+                    };
+                    setMessages((prev) => [...prev, commentMsg]);
                     void loadConversations();
                   }
                 }}
@@ -155,23 +172,36 @@ export function ChatPanel({ currentUserId, currentUserName }: ChatPanelProps) {
                 ) : (
                   messages.map((msg) => {
                     const isMine = msg.senderId === currentUserId;
+                    const commentOnSchedule = isScheduleComment(msg);
+
                     return (
                       <div key={msg.id} className={`tempo-chat-msg ${isMine ? 'is-mine' : 'is-theirs'}`}>
                         <div className="tempo-chat-msg-sender">{msg.sender.fullName}</div>
                         {msg.scheduleShare ? (
                           <div className="tempo-chat-msg-share">
-                            <div className="tempo-chat-msg-text">{msg.content}</div>
-                            <button
-                              type="button"
-                              className="tempo-chat-share-link"
-                              onClick={() => handleViewSharedSchedule(
-                                msg.scheduleShare!.slug,
-                                msg.scheduleShare!.schedule.name,
-                                msg.scheduleShare!.permission,
-                              )}
-                            >
-                              📅 Xem lịch: {msg.scheduleShare.schedule.name}
-                            </button>
+                            {commentOnSchedule ? (
+                              <>
+                                <div className="tempo-chat-comment-badge">
+                                  📝 Nhận xét cho lịch: <strong>{msg.scheduleShare.schedule.name}</strong>
+                                </div>
+                                <div className="tempo-chat-msg-text">{msg.content}</div>
+                              </>
+                            ) : (
+                              <>
+                                <div className="tempo-chat-msg-text">{msg.content}</div>
+                                <button
+                                  type="button"
+                                  className="tempo-chat-share-link"
+                                  onClick={() => handleViewSharedSchedule(
+                                    msg.scheduleShare!.slug,
+                                    msg.scheduleShare!.schedule.name,
+                                    msg.scheduleShare!.permission,
+                                  )}
+                                >
+                                  📅 Xem lịch: {msg.scheduleShare.schedule.name}
+                                </button>
+                              </>
+                            )}
                           </div>
                         ) : (
                           <div className="tempo-chat-msg-text">{msg.content}</div>

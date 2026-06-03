@@ -1711,6 +1711,17 @@ button {
   font-size: 0.9rem;
 }
 
+.tempo-chat-comment-badge {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--color-accent-dark);
+  background: var(--color-background-info);
+  padding: 4px 8px;
+  border-radius: 8px;
+  margin-bottom: 4px;
+}
+
 .tempo-chat-share-comment {
   display: grid;
   gap: 6px;

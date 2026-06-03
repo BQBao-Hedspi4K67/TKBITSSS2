@@ -1,8 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { getSharedScheduleBySlug } from '../../services/timetableService';
-import { getCourseTheme, parseSectionTimeRange, detectLocalConflicts } from '../../utils/timetable';
-import type { ConflictPreview } from '../../types/timetable';
-import { ConflictPanel } from './ConflictPanel';
+import { getCourseTheme } from '../../utils/timetable';
 
 type ScheduleShareViewProps = {
   slug: string;
@@ -51,6 +49,7 @@ export function ScheduleShareView({ slug, scheduleName, permission, onClose, onS
   const [loading, setLoading] = useState(true);
   const [comment, setComment] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [sending, setSending] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -68,10 +67,16 @@ export function ScheduleShareView({ slug, scheduleName, permission, onClose, onS
     return () => { cancelled = true; };
   }, [slug]);
 
-  const handleSendComment = () => {
-    if (!comment.trim()) return;
-    void onSendComment(comment.trim());
-    setComment('');
+  const handleSendComment = async () => {
+    if (!comment.trim() || sending) return;
+    setSending(true);
+    try {
+      await onSendComment(comment.trim());
+      // Close modal and let parent handle displaying the message
+      onClose();
+    } finally {
+      setSending(false);
+    }
   };
 
   // Build calendar view like ScheduleDashboard
@@ -278,14 +283,15 @@ export function ScheduleShareView({ slug, scheduleName, permission, onClose, onS
                 onKeyDown={(e) => {
                   if (e.key === 'Enter') handleSendComment();
                 }}
+                disabled={sending}
               />
               <button
                 type="button"
                 className="tempo-primary-button"
                 onClick={handleSendComment}
-                disabled={!comment.trim()}
+                disabled={!comment.trim() || sending}
               >
-                Gửi nhận xét
+                {sending ? 'Đang gửi...' : 'Gửi nhận xét'}
               </button>
             </div>
           </div>

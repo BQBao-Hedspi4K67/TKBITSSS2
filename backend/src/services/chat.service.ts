@@ -46,14 +46,23 @@ export async function sendMessage(
     throw new HttpError(404, 'Không tìm thấy người nhận', { code: 'RECEIVER_NOT_FOUND' });
   }
 
-  // If scheduleShareId provided, verify it exists
+  // If scheduleShareId provided, look up by id OR by slug (the frontend may pass slug)
+  let resolvedShareId: string | null = null;
   if (scheduleShareId) {
-    const share = await prisma.scheduleShare.findUnique({
+    // First try to find by id
+    let share = await prisma.scheduleShare.findUnique({
       where: { id: scheduleShareId },
       include: { schedule: { select: { userId: true } } },
     });
+    // If not found by id, try to find by slug
     if (!share) {
-      throw new HttpError(404, 'Không tìm thấy link chia sẻ', { code: 'SHARE_NOT_FOUND' });
+      share = await prisma.scheduleShare.findUnique({
+        where: { slug: scheduleShareId },
+        include: { schedule: { select: { userId: true } } },
+      });
+    }
+    if (share) {
+      resolvedShareId = share.id;
     }
   }
 
@@ -62,7 +71,7 @@ export async function sendMessage(
       senderId,
       receiverId,
       content: content.trim(),
-      scheduleShareId: scheduleShareId ?? null,
+      scheduleShareId: resolvedShareId,
     },
     include: {
       sender: {
