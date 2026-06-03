@@ -130,26 +130,38 @@ export async function importTimetableFile(file: Express.Multer.File, userId?: st
     }));
 
     let insertedCount = 0;
-    for (const chunk of chunkArray(sectionData, 250)) {
+    for (const chunk of chunkArray(sectionData, 500)) {
       const response = await tx.importedSection.createMany({
         data: chunk,
       });
       insertedCount += response.count;
     }
 
+    // Fetch sections once inside the transaction to avoid an extra round-trip
+    const savedSections = await tx.importedSection.findMany({
+      where: { batchId: batch.id },
+      orderBy: [{ courseCode: 'asc' }, { classCode: 'asc' }],
+    });
+
     return {
       batch,
-      sections: { count: insertedCount },
+      sections: savedSections,
     };
   }, {
-    maxWait: 10_000,
-    timeout: 120_000,
+    maxWait: 5_000,
+    timeout: 30_000,
   });
 
-  const savedSections = await prisma.importedSection.findMany({
-    where: { batchId: result.batch.id },
-    orderBy: [{ courseCode: 'asc' }, { classCode: 'asc' }],
-  });
+  // Build subject->sections map efficiently (O(n) instead of O(n*m))
+  const sectionsByCourse = new Map<string, ImportedSection[]>();
+  for (const section of result.sections) {
+    const list = sectionsByCourse.get(section.courseCode);
+    if (list) {
+      list.push(section);
+    } else {
+      sectionsByCourse.set(section.courseCode, [section]);
+    }
+  }
 
   return {
     batch: {
@@ -166,7 +178,7 @@ export async function importTimetableFile(file: Express.Multer.File, userId?: st
       courseNameEn: subject.courseNameEn,
       creditWeight: subject.creditWeight,
       sectionCount: subject.sections.length,
-      sections: savedSections.filter((section) => section.courseCode === subject.courseCode),
+      sections: sectionsByCourse.get(subject.courseCode) ?? [],
     })),
     warnings: parsed.warnings,
   };

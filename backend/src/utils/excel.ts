@@ -198,7 +198,7 @@ function normalizeRowKeys(row: Record<string, unknown>) {
 }
 
 export function parseTimetableWorkbook(buffer: Buffer, fileName: string): ParsedWorkbook {
-  const workbook = XLSX.read(buffer, { type: 'buffer' });
+  const workbook = XLSX.read(buffer, { type: 'buffer', cellDates: false, cellHTML: false });
   const sheetName = workbook.SheetNames[0];
   if (!sheetName) {
     throw new HttpError(400, 'File Excel khong co sheet nao hop le', { code: 'EMPTY_WORKBOOK' });
@@ -208,7 +208,7 @@ export function parseTimetableWorkbook(buffer: Buffer, fileName: string): Parsed
   const rowsAsArrays = XLSX.utils.sheet_to_json<unknown[]>(sheet, {
     header: 1,
     defval: '',
-    raw: false,
+    raw: true,
   });
 
   if (!rowsAsArrays.length) {
