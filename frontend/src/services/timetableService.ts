@@ -62,8 +62,30 @@ export async function deleteSchedule(scheduleId: string) {
   });
 }
 
-export async function createShare(scheduleId: string) {
-  return request<{ share: { id: string; slug: string; permission: 'VIEW' | 'COMMENT' } }>(`/schedules/${scheduleId}/shares`, {
+export async function createShare(scheduleId: string, permission: 'VIEW' | 'COMMENT' = 'VIEW') {
+  return request<{ share: { id: string; slug: string; permission: 'VIEW' | 'COMMENT'; createdAt: string; expiresAt: string | null } }>(`/schedules/${scheduleId}/shares`, {
     method: 'POST',
+    body: JSON.stringify({ permission }),
   });
+}
+
+export async function listShares(scheduleId: string) {
+  return request<{ shares: Array<{ id: string; slug: string; permission: 'VIEW' | 'COMMENT'; createdAt: string; expiresAt: string | null; schedule: { name: string } }> }>(`/schedules/${scheduleId}/shares`);
+}
+
+export async function updateShare(scheduleId: string, shareId: string, data: { permission?: 'VIEW' | 'COMMENT'; expiresAt?: string | null }) {
+  return request<{ share: { id: string; slug: string; permission: 'VIEW' | 'COMMENT'; expiresAt: string | null } }>(`/schedules/${scheduleId}/shares/${shareId}`, {
+    method: 'PUT',
+    body: JSON.stringify(data),
+  });
+}
+
+export async function deleteShareFromSchedule(scheduleId: string, shareId: string) {
+  return request<{ success: boolean }>(`/schedules/${scheduleId}/shares/${shareId}`, {
+    method: 'DELETE',
+  });
+}
+
+export async function getSharedScheduleBySlug(slug: string) {
+  return request<{ slug: string; permission: 'VIEW' | 'COMMENT'; createdAt: string; schedule: { id: string; name: string; user: { fullName: string; studentCode: string | null }; items: Array<{ id: string; courseCode: string; courseName: string; classCode: string; weekday: string; startTime: string; endTime: string; room: string; building: string | null }> } }>(`/schedules/shared/${slug}`);
 }

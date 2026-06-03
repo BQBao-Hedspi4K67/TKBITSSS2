@@ -15,6 +15,12 @@ type ScheduleItemInput = {
   color?: string | null;
 };
 
+function generateShareSlug(): string {
+  const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  const randomPart = Array.from({ length: 8 }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
+  return `tkb-${randomPart}`;
+}
+
 export function detectTimeConflicts(items: ScheduleItemInput[]) {
   const conflicts: Array<{
     type: ConflictType;
@@ -54,6 +60,7 @@ export function detectTimeConflicts(items: ScheduleItemInput[]) {
         });
         continue;
       }
+
 
       const gapMinutes = Math.min(Math.abs(rightStart - leftEnd), Math.abs(leftStart - rightEnd));
       const differentRoom = left.room !== right.room;
@@ -296,13 +303,91 @@ export async function deleteSchedule(userId: string, scheduleId: string) {
   return { success: true };
 }
 
-export async function createShare(userId: string, scheduleId: string, permission: SharePermission = SharePermission.VIEW) {
-  const schedule = await prisma.schedule.findFirst({ where: { id: scheduleId, userId } });
+export async function getScheduleById(scheduleId: string) {
+  const schedule = await prisma.schedule.findUnique({
+    where: { id: scheduleId },
+    include: {
+      items: true,
+      conflicts: true,
+      shares: true,
+      user: {
+        select: {
+          id: true,
+          fullName: true,
+          studentCode: true,
+        },
+      },
+    },
+  });
+
   if (!schedule) {
     throw new HttpError(404, 'Khong tim thay lich hoc', { code: 'SCHEDULE_NOT_FOUND' });
   }
 
-  const slug = `share-${scheduleId}-${Date.now().toString(36)}`;
+  return schedule;
+}
+
+export async function getScheduleBySlug(slug: string) {
+  const share = await prisma.scheduleShare.findUnique({
+    where: { slug },
+    include: {
+      schedule: {
+        include: {
+          items: true,
+          user: {
+            select: {
+              id: true,
+              fullName: true,
+              studentCode: true,
+            },
+          },
+        },
+      },
+    },
+  });
+
+  if (!share) {
+    throw new HttpError(404, 'Khong tim thay lich chia se', { code: 'SHARE_NOT_FOUND' });
+  }
+
+  if (share.expiresAt && share.expiresAt < new Date()) {
+    throw new HttpError(410, 'Lich chia se da het han', { code: 'SHARE_EXPIRED' });
+  }
+
+  return {
+    slug: share.slug,
+    permission: share.permission,
+    createdAt: share.createdAt,
+    schedule: share.schedule,
+  };
+}
+
+export async function createShare(
+  userId: string,
+  scheduleId: string,
+  permission: SharePermission = SharePermission.VIEW,
+) {
+  const schedule = await prisma.schedule.findFirst({
+    where: { id: scheduleId, userId },
+    include: { user: { select: { fullName: true, studentCode: true } } },
+  });
+
+  if (!schedule) {
+    throw new HttpError(404, 'Khong tim thay lich hoc', { code: 'SCHEDULE_NOT_FOUND' });
+  }
+
+  // Check if there's already an active share for this schedule
+  const existingShare = await prisma.scheduleShare.findFirst({
+    where: { scheduleId },
+    orderBy: { createdAt: 'desc' },
+  });
+
+  if (existingShare) {
+    // Return existing share
+    return existingShare;
+  }
+
+  const slug = generateShareSlug();
   return prisma.scheduleShare.create({
     data: {
       scheduleId,
@@ -310,4 +395,72 @@ export async function createShare(userId: string, scheduleId: string, permission
       permission,
     },
   });
+}
+
+export async function listShares(userId: string, scheduleId: string) {
+  const schedule = await prisma.schedule.findFirst({
+    where: { id: scheduleId, userId },
+  });
+
+  if (!schedule) {
+    throw new HttpError(404, 'Khong tim thay lich hoc', { code: 'SCHEDULE_NOT_FOUND' });
+  }
+
+  return prisma.scheduleShare.findMany({
+    where: { scheduleId },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      schedule: {
+        select: {
+          name: true,
+        },
+      },
+    },
+  });
+}
+
+export async function updateShare(
+  userId: string,
+  shareId: string,
+  data: { permission?: SharePermission; expiresAt?: string | null },
+) {
+  const share = await prisma.scheduleShare.findUnique({
+    where: { id: shareId },
+    include: { schedule: { select: { userId: true } } },
+  });
+
+  if (!share) {
+    throw new HttpError(404, 'Khong tim thay chia se', { code: 'SHARE_NOT_FOUND' });
+  }
+
+  if (share.schedule.userId !== userId) {
+    throw new HttpError(403, 'Khong co quyen cap nhat chia se nay', { code: 'FORBIDDEN' });
+  }
+
+  return prisma.scheduleShare.update({
+    where: { id: shareId },
+    data: {
+      permission: data.permission ?? undefined,
+      expiresAt: data.expiresAt !== undefined ? (data.expiresAt ? new Date(data.expiresAt) : null) : undefined,
+    },
+  });
+}
+
+export async function deleteShare(userId: string, shareId: string) {
+  const share = await prisma.scheduleShare.findUnique({
+    where: { id: shareId },
+    include: { schedule: { select: { userId: true } } },
+  });
+
+  if (!share) {
+    throw new HttpError(404, 'Khong tim thay chia se', { code: 'SHARE_NOT_FOUND' });
+  }
+
+  if (share.schedule.userId !== userId) {
+    throw new HttpError(403, 'Khong co quyen xoa chia se nay', { code: 'FORBIDDEN' });
+  }
+
+  await prisma.scheduleShare.delete({ where: { id: shareId } });
+
+  return { success: true };
 }

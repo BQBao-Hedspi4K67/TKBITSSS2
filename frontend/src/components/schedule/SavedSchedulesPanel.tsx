@@ -5,7 +5,7 @@ type SavedSchedulesPanelProps = {
   schedules: SavedSchedule[];
   onView: (scheduleId: string) => void | Promise<void>;
   onDelete: (scheduleId: string) => void | Promise<void>;
-  onShare: (scheduleId: string) => void | Promise<void>;
+  onShare: (schedule: SavedSchedule) => void | Promise<void>;
   onSaveCurrent: () => void | Promise<void>;
 };
 
@@ -105,7 +105,7 @@ export function SavedSchedulesPanel({ schedules, onView, onDelete, onShare, onSa
                 <button type="button" className="tempo-secondary-button" onClick={() => onView(schedule.id)}>
                   View
                 </button>
-                <button type="button" className="tempo-secondary-button" onClick={() => onShare(schedule.id)}>
+                <button type="button" className="tempo-secondary-button" onClick={() => onShare(schedule)}>
                   Share
                 </button>
                 <button type="button" className="tempo-secondary-button" onClick={() => onDelete(schedule.id)}>

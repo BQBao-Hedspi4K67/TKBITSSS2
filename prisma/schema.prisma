@@ -53,6 +53,8 @@ model User {
   importBatches ImportBatch[]
   selections    UserSelection[]
   schedules     Schedule[]
+  sentMessages  Message[]      @relation("SentMessages")
+  receivedMessages Message[]   @relation("ReceivedMessages")
 }
 
 model ImportBatch {
@@ -145,7 +147,6 @@ model Schedule {
   items           ScheduleItem[]
   conflicts       ScheduleConflict[]
   shares          ScheduleShare[]
-
   @@index([userId, createdAt])
   @@index([sourceBatchId])
 }
@@ -194,6 +195,23 @@ model ScheduleShare {
   permission   SharePermission  @default(VIEW)
   expiresAt    DateTime?
   createdAt    DateTime         @default(now())
+  messages     Message[]
 
   @@index([scheduleId, createdAt])
+}
+
+model Message {
+  id              String         @id @default(cuid())
+  senderId        String
+  sender          User           @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiverId      String
+  receiver        User           @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  scheduleShareId String?
+  scheduleShare   ScheduleShare? @relation(fields: [scheduleShareId], references: [id], onDelete: SetNull)
+  content         String
+  createdAt       DateTime       @default(now())
+
+  @@index([senderId, receiverId])
+  @@index([receiverId, senderId])
+  @@index([scheduleShareId])
 }

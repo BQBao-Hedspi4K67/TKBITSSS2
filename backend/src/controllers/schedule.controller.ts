@@ -1,6 +1,19 @@
 import type { Request, Response, NextFunction } from 'express';
+import { SharePermission } from '@prisma/client';
 import { conflictPreviewSchema, saveScheduleSchema, updateScheduleSchema } from '../validators/import.validator';
-import { createShare, deleteSchedule, listSchedules, previewConflicts, saveSchedule, updateSchedule } from '../services/schedule.service';
+import {
+  createShare,
+  deleteSchedule,
+  deleteShare,
+  getScheduleBySlug,
+  listSchedules,
+  listShares,
+  previewConflicts,
+  saveSchedule,
+  updateSchedule,
+  updateShare,
+  getScheduleById,
+} from '../services/schedule.service';
 
 export async function previewConflictsController(req: Request, res: Response, next: NextFunction) {
   try {
@@ -52,11 +65,67 @@ export async function deleteScheduleController(req: Request, res: Response, next
   }
 }
 
+// ─── Public share endpoint (no auth) ───
+
+export async function getSharedScheduleBySlugController(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { slug } = req.params as { slug: string };
+    const result = await getScheduleBySlug(slug);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+// ─── Auth-required share endpoints ───
+
 export async function createShareController(req: Request, res: Response, next: NextFunction) {
   try {
     const { scheduleId } = req.params as { scheduleId: string };
-    const share = await createShare(req.user!.id, scheduleId);
+    const permission = (req.body?.permission as SharePermission) ?? SharePermission.VIEW;
+    const share = await createShare(req.user!.id, scheduleId, permission);
     res.status(201).json({ share });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function listSharesController(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { scheduleId } = req.params as { scheduleId: string };
+    const shares = await listShares(req.user!.id, scheduleId);
+    res.json({ shares });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function updateShareController(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { shareId } = req.params as { shareId: string };
+    const data = req.body as { permission?: SharePermission; expiresAt?: string | null };
+    const share = await updateShare(req.user!.id, shareId, data);
+    res.json({ share });
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function deleteShareController(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { shareId } = req.params as { shareId: string };
+    const result = await deleteShare(req.user!.id, shareId);
+    res.json(result);
+  } catch (error) {
+    next(error);
+  }
+}
+
+export async function getScheduleDetailController(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { scheduleId } = req.params as { scheduleId: string };
+    const schedule = await getScheduleById(scheduleId);
+    res.json({ schedule });
   } catch (error) {
     next(error);
   }

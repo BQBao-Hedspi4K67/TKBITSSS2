@@ -5,8 +5,11 @@ import { UploadDropzone } from '../components/upload/UploadDropzone';
 import { SubjectList } from '../components/subjects/SubjectList';
 import { ScheduleDashboard } from '../components/schedule/ScheduleDashboard';
 import { SavedSchedulesPanel } from '../components/schedule/SavedSchedulesPanel';
+import { ShareScheduleModal } from '../components/schedule/ShareScheduleModal';
+import { ChatPanel } from '../components/chat/ChatPanel';
 import { useTimetableImport } from '../hooks/useTimetableImport';
-import { createShare, deleteSchedule, getCurrentTimetable, getUserSelections, listSchedules, saveSchedule, updateSchedule, uploadTimetable } from '../services/timetableService';
+import { useAuth } from '../hooks/useAuth';
+import { deleteSchedule, getCurrentTimetable, getUserSelections, listSchedules, saveSchedule, updateSchedule, uploadTimetable } from '../services/timetableService';
 import type { TimetableSection } from '../types/timetable';
 import type { SavedSchedule } from '../types/schedule';
 import { detectLocalConflicts } from '../utils/timetable';
@@ -15,10 +18,12 @@ const tabs = [
   { key: 'upload', label: 'Upload Excel' },
   { key: 'dashboard', label: 'Dashboard' },
   { key: 'saved', label: 'Lịch đã lưu' },
+  { key: 'chat', label: ' Trò chuyện' },
   { key: 'conflicts', label: 'Lọc & Xung đột' },
 ];
 
 export function ScheduleBuilderPage() {
+  const { user } = useAuth();
   const { batchId, batch, subjects, sections, selectedSubject, selectedSubjectCode, selectedSubjectCodes, selectedClassCodeByCourseCode, visibleSubjects, suggestedSubjects, totalCredits, selectedClasses, selectedSections, setBatch, setBatchId, setSelectedSubjectCode, setSelectionSnapshot, chooseSubject, clearSubject, chooseClass, setSearch, search, setUploadError, uploadError } = useTimetableImport();
   const [activeTab, setActiveTab] = useState('upload');
   const [loadingUpload, setLoadingUpload] = useState(false);
@@ -33,6 +38,7 @@ export function ScheduleBuilderPage() {
   const [viewingSchedule, setViewingSchedule] = useState<SavedSchedule | null>(null);
   const [previousSelectionSnapshot, setPreviousSelectionSnapshot] = useState<Array<{ courseCode: string; classCode: string | null }> | null>(null);
   const [previousActiveSubjectCode, setPreviousActiveSubjectCode] = useState<string | null>(null);
+  const [shareModalSchedule, setShareModalSchedule] = useState<SavedSchedule | null>(null);
 
   const localConflicts = useMemo(() => detectLocalConflicts(selectedSections), [selectedSections]);
 
@@ -395,9 +401,8 @@ export function ScheduleBuilderPage() {
                     setStatusMessage('Đã xóa lịch khỏi database.');
                 }}
                 onView={handleViewSchedule}
-                  onShare={async (scheduleId) => {
-                    const response = await createShare(scheduleId);
-                    setStatusMessage(`Đã tạo share slug: ${response.share.slug}`);
+                  onShare={(schedule) => {
+                    setShareModalSchedule(schedule);
                 }}
                 onSaveCurrent={viewingSchedule ? () => {
                   setSaveDialogName(viewingSchedule.name);
@@ -405,6 +410,15 @@ export function ScheduleBuilderPage() {
                   setSaveDialogOpen(true);
                 } : openSaveDialog}
               />
+            ) : null}
+
+            {activeTab === 'chat' ? (
+              <section className="tempo-surface-card" style={{ padding: 0 }}>
+                <ChatPanel
+                  currentUserId={user?.id ?? ''}
+                  currentUserName={user?.fullName}
+                />
+              </section>
             ) : null}
 
             {activeTab === 'conflicts' ? (
@@ -416,6 +430,14 @@ export function ScheduleBuilderPage() {
           </main>
         </div>
       </div>
+
+      {shareModalSchedule ? (
+        <ShareScheduleModal
+          schedule={shareModalSchedule}
+          onClose={() => setShareModalSchedule(null)}
+          onStatusMessage={setStatusMessage}
+        />
+      ) : null}
 
       {saveDialogOpen ? (
         <div className="tempo-modal-overlay" role="presentation" onClick={() => setSaveDialogOpen(false)}>

@@ -1352,22 +1352,775 @@ button {
   animation: tempo-conflict-shake 1.15s ease-in-out infinite;
 }
 
-@keyframes tempo-conflict-shake {
-  0%,
-  100% {
-    transform: translateX(0);
+/* ── Chat Panel ── */
+.tempo-chat-shell {
+  display: grid;
+  grid-template-columns: 280px 1fr;
+  min-height: 480px;
+  border-radius: 18px;
+  overflow: hidden;
+}
+
+.tempo-chat-conversations {
+  border-right: 1px solid var(--color-border-tertiary);
+  background: var(--color-background-secondary);
+  display: flex;
+  flex-direction: column;
+}
+
+.tempo-chat-conversations-header {
+  padding: 14px;
+  border-bottom: 1px solid var(--color-border-tertiary);
+}
+
+.tempo-chat-conversations-header h3 {
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+.tempo-chat-conversations-list {
+  flex: 1;
+  overflow-y: auto;
+}
+
+.tempo-chat-conv-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 14px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: var(--font-sans);
+}
+
+.tempo-chat-conv-item:hover {
+  background: rgba(0, 0, 0, 0.04);
+}
+
+.tempo-chat-conv-item.is-active {
+  background: var(--color-background-info);
+}
+
+.tempo-chat-conv-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+
+.tempo-chat-conv-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.tempo-chat-conv-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--color-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.tempo-chat-conv-preview {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-top: 2px;
+}
+
+.tempo-chat-conv-code {
+  font-size: 0.72rem;
+  color: var(--color-text-tertiary);
+}
+
+.tempo-chat-unread-badge {
+  background: var(--color-accent);
+  color: #fff;
+  font-size: 0.65rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
+
+.tempo-chat-main {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+.tempo-chat-main-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--color-border-tertiary);
+  background: var(--color-background-secondary);
+}
+
+.tempo-chat-placeholder {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--color-text-tertiary);
+  font-size: 0.9rem;
+}
+
+.tempo-chat-placeholder-icon {
+  font-size: 2.5rem;
+}
+
+.tempo-chat-messages {
+  flex: 1;
+  padding: 12px 16px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tempo-chat-msg {
+  max-width: 80%;
+  padding: 10px 12px;
+  border-radius: 14px;
+  font-size: 0.85rem;
+  line-height: 1.5;
+}
+
+.tempo-chat-msg.is-mine {
+  align-self: flex-end;
+  background: var(--color-accent);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.tempo-chat-msg.is-theirs {
+  align-self: flex-start;
+  background: var(--color-background-secondary);
+  color: var(--color-text-primary);
+  border-bottom-left-radius: 4px;
+}
+
+.tempo-chat-msg-sender {
+  font-size: 0.68rem;
+  font-weight: 600;
+  margin-bottom: 4px;
+  opacity: 0.8;
+}
+
+.tempo-chat-msg-text {
+  word-break: break-word;
+}
+
+.tempo-chat-msg-share {
+  display: grid;
+  gap: 6px;
+}
+
+.tempo-chat-msg-time {
+  font-size: 0.6rem;
+  margin-top: 4px;
+  opacity: 0.7;
+  text-align: right;
+}
+
+.tempo-chat-share-link {
+  background: rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 10px;
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  cursor: pointer;
+  text-align: left;
+  color: inherit;
+  font-family: var(--font-sans);
+  transition: background 0.15s;
+}
+
+.tempo-chat-share-link:hover {
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.tempo-chat-input-row {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--color-border-tertiary);
+  background: var(--color-background-secondary);
+}
+
+.tempo-chat-input {
+  flex: 1;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 12px;
+  padding: 10px 14px;
+  background: #fff;
+  outline: none;
+  font-size: 0.85rem;
+  font-family: var(--font-sans);
+  transition: border-color 0.2s;
+}
+
+.tempo-chat-input:focus {
+  border-color: var(--color-accent);
+}
+
+.tempo-chat-send-btn {
+  padding: 10px 18px;
+}
+
+.tempo-chat-empty {
+  color: var(--color-text-tertiary);
+  font-size: 0.85rem;
+  padding: 20px;
+  text-align: center;
+}
+
+/* Chat share view */
+.tempo-chat-share-view {
+  flex: 1;
+  padding: 12px 16px;
+  overflow-y: auto;
+  display: grid;
+  gap: 12px;
+}
+
+.tempo-chat-share-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.tempo-chat-share-header strong {
+  font-size: 0.95rem;
+}
+
+.tempo-chat-share-meta {
+  font-size: 0.75rem;
+  color: var(--color-text-tertiary);
+  margin-top: 2px;
+}
+
+.tempo-share-view-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px;
+  padding: 1px;
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: 10px;
+  background: var(--color-border-tertiary);
+  overflow: hidden;
+}
+
+.tempo-share-view-day {
+  position: relative;
+  min-height: 28px;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.tempo-share-view-day-label {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  font-size: 0.48rem;
+  font-weight: 700;
+  color: var(--color-text-tertiary);
+}
+
+.tempo-share-view-day-track {
+  position: relative;
+  height: 16px;
+  margin: 13px 2px 2px;
+  border-radius: 3px;
+  background: linear-gradient(to bottom, rgba(230, 241, 251, 0.72), rgba(255, 255, 255, 0.95));
+  overflow: hidden;
+}
+
+.tempo-share-view-block {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: 2px;
+  height: 5px;
+  border-radius: 2px;
+  border: 1px solid transparent;
+  opacity: 0.96;
+}
+
+.tempo-share-view-courses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.tempo-share-view-course {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 8px;
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: 8px;
+  font-size: 0.72rem;
+  background: var(--color-background-secondary);
+}
+
+.tempo-share-view-course-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.tempo-share-view-course-code {
+  font-weight: 600;
+}
+
+.tempo-share-view-course-name {
+  color: var(--color-text-secondary);
+}
+
+.tempo-share-view-course-class {
+  color: var(--color-text-tertiary);
+}
+
+.tempo-chat-share-loading,
+.tempo-chat-share-error {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-text-tertiary);
+  font-size: 0.9rem;
+}
+
+.tempo-chat-share-comment {
+  display: grid;
+  gap: 6px;
+}
+
+.tempo-chat-share-comment-row {
+  display: flex;
+  gap: 8px;
+}
+
+/* QR image in share modal */
+.tempo-share-qr-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.tempo-share-qr-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  color: var(--color-text-tertiary);
+}
+
+/* User search dropdown in share modal */
+.tempo-share-user-dropdown {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #fff;
+  border: 1px solid var(--color-border-secondary);
+  border-radius: 12px;
+  box-shadow: 0 12px 32px rgba(16, 24, 40, 0.16);
+  max-height: 240px;
+  overflow-y: auto;
+  margin-top: 4px;
+}
+
+.tempo-share-user-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: background 0.15s;
+}
+
+.tempo-share-user-option:hover {
+  background: var(--color-background-info);
+}
+
+.tempo-share-user-option-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: var(--color-accent);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.65rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.tempo-share-user-option-name {
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.tempo-share-user-option-code {
+  font-size: 0.68rem;
+  color: var(--color-text-tertiary);
+}
+
+.tempo-share-search-spinner {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.85rem;
+}
+
+.tempo-share-friends-send {
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .tempo-chat-shell {
+    grid-template-columns: 1fr;
   }
-  20% {
-    transform: translateX(-1.5px);
+  
+  .tempo-chat-conversations {
+    max-height: 200px;
+    border-right: none;
+    border-bottom: 1px solid var(--color-border-tertiary);
   }
-  40% {
-    transform: translateX(1.5px);
+}
+
+/* ── Share Modal ── */
+.tempo-share-modal {
+  width: min(640px, 100%);
+}
+
+.tempo-share-section-label {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  margin-bottom: 6px;
+}
+
+.tempo-share-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: 14px;
+  background: rgba(246, 248, 252, 0.9);
+}
+
+.tempo-share-preview-calendar {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 1px;
+  padding: 1px;
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: 10px;
+  background: var(--color-border-tertiary);
+  overflow: hidden;
+  width: 140px;
+  flex-shrink: 0;
+}
+
+.tempo-share-preview-day {
+  position: relative;
+  min-height: 32px;
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.tempo-share-preview-day-label {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  right: 2px;
+  font-size: 0.52rem;
+  font-weight: 700;
+  color: var(--color-text-tertiary);
+}
+
+.tempo-share-preview-day-track {
+  position: relative;
+  height: 20px;
+  margin: 14px 2px 2px;
+  border-radius: 4px;
+  background: linear-gradient(to bottom, rgba(230, 241, 251, 0.72), rgba(255, 255, 255, 0.95));
+  overflow: hidden;
+}
+
+.tempo-share-preview-block {
+  position: absolute;
+  left: 2px;
+  right: 2px;
+  top: 2px;
+  height: 6px;
+  border-radius: 3px;
+  border: 1px solid transparent;
+  opacity: 0.96;
+}
+
+.tempo-share-preview-meta {
+  font-size: 0.78rem;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+.tempo-share-link-section {
+  margin-top: 8px;
+}
+
+.tempo-share-link-row {
+  display: flex;
+  gap: 8px;
+}
+
+.tempo-share-link-input {
+  flex: 1;
+  background: var(--color-background-secondary);
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: 12px;
+  padding: 10px 12px;
+  font-size: 0.82rem;
+  color: var(--color-text-secondary);
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: 'SF Mono', 'Consolas', monospace;
+}
+
+.tempo-share-loading {
+  color: var(--color-text-tertiary);
+  font-style: italic;
+}
+
+.tempo-share-copy-btn {
+  flex-shrink: 0;
+  white-space: nowrap;
+  padding: 10px 16px;
+}
+
+.tempo-share-copy-btn.is-copied {
+  background: var(--color-success);
+  border-color: var(--color-success);
+}
+
+.tempo-share-row {
+  display: flex;
+  gap: 16px;
+  margin-top: 12px;
+}
+
+.tempo-share-qr-section {
+  flex-shrink: 0;
+}
+
+.tempo-share-qr-box {
+  width: 80px;
+  height: 80px;
+  background: var(--color-background-secondary);
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: 12px;
+  padding: 8px;
+  overflow: hidden;
+}
+
+.tempo-share-qr-pattern {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  width: 100%;
+  height: 100%;
+}
+
+.tempo-share-qr-row {
+  display: flex;
+  gap: 2px;
+  flex: 1;
+}
+
+.tempo-share-qr-dot {
+  flex: 1;
+  border-radius: 1px;
+  background: transparent;
+}
+
+.tempo-share-qr-dot.is-filled {
+  background: var(--color-text-primary);
+}
+
+.tempo-share-permissions {
+  flex: 1;
+}
+
+.tempo-share-permission-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tempo-share-permission-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 4px 0;
+}
+
+.tempo-share-permission-option input {
+  cursor: pointer;
+}
+
+.tempo-share-friends-section {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border-tertiary);
+}
+
+.tempo-share-friends-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.tempo-share-friend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--color-background-secondary);
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: 999px;
+  padding: 4px 10px 4px 6px;
+  font-size: 0.82rem;
+}
+
+.tempo-share-friend-avatar {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.55rem;
+  font-weight: 700;
+  color: inherit;
+  flex-shrink: 0;
+}
+
+.tempo-share-friend-remove {
+  border: none;
+  background: transparent;
+  color: var(--color-text-tertiary);
+  cursor: pointer;
+  padding: 0;
+  font-size: 0.75rem;
+  line-height: 1;
+}
+
+.tempo-share-friend-remove:hover {
+  color: var(--color-danger);
+}
+
+.tempo-share-friend-add {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tempo-share-friend-input {
+  border: 1px dashed var(--color-border-secondary);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.82rem;
+  background: transparent;
+  outline: none;
+  min-width: 100px;
+  font-family: var(--font-sans);
+}
+
+.tempo-share-friend-input:focus {
+  border-color: var(--color-accent);
+  border-style: solid;
+}
+
+.tempo-share-friend-add-btn {
+  border: none;
+  background: var(--color-accent);
+  color: #fff;
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+
+.tempo-share-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--color-border-tertiary);
+}
+
+.tempo-share-actions-right {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.tempo-share-revoke-btn {
+  color: var(--color-danger);
+  border-color: #f09595;
+  font-size: 0.82rem;
+}
+
+@media (max-width: 640px) {
+  .tempo-share-row {
+    flex-direction: column;
   }
-  60% {
-    transform: translateX(-1px);
+
+  .tempo-share-actions {
+    flex-direction: column;
+    align-items: stretch;
   }
-  80% {
-    transform: translateX(1px);
+
+  .tempo-share-actions-right {
+    margin-left: 0;
   }
 }
 
