@@ -230,10 +230,7 @@ export function ScheduleBuilderPage() {
     <AppShell
       sidebarTop={(
         <>
-          <div className="tempo-metric">
-            <span>Imported batch</span>
-            <strong>{batch?.fileName ?? 'None'}</strong>
-          </div>
+          
 
           <div className="tempo-metric">
             <span>Số môn học đã chọn</span>

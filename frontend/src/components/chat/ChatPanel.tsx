@@ -34,11 +34,12 @@ export function ChatPanel({ currentUserId, currentUserName }: ChatPanelProps) {
 
   useEffect(() => {
     const uid = selectedUserId;
-    if (!uid) return;
+    if (uid === null) return;
+    const userId = uid;
     let cancelled = false;
     async function load() {
       try {
-        const response = await getMessages(uid);
+        const response = await getMessages(userId);
         if (!cancelled) setMessages(response.messages);
       } catch {
         // silent
