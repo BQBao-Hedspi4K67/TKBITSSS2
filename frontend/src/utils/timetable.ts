@@ -212,6 +212,12 @@ export function buildSubjectsFromSections(sections: TimetableSection[]): Timetab
     .sort((left, right) => left.courseCode.localeCompare(right.courseCode));
 }
 
+function extractBuildingFromRoom(room: string): string {
+  // Extract building from room name: "D9-503" → "D9", "B201" → "B", "A105" → "A"
+  const match = room.match(/^([A-Za-z]+\d*)/);
+  return match ? match[1] : room;
+}
+
 export function detectLocalConflicts(sections: TimetableSection[]): ConflictPreview[] {
   const conflicts: ConflictPreview[] = [];
 
@@ -244,12 +250,15 @@ export function detectLocalConflicts(sections: TimetableSection[]): ConflictPrev
       }
 
       const gap = Math.min(Math.abs(rightStart - leftEnd), Math.abs(leftStart - rightEnd));
-      if (left.room !== right.room && gap > 0 && gap < 10) {
+      const leftBuilding = extractBuildingFromRoom(left.room);
+      const rightBuilding = extractBuildingFromRoom(right.room);
+      const differentBuilding = leftBuilding !== rightBuilding;
+      if (differentBuilding && gap > 0 && gap < 15) {
         conflicts.push({
           type: 'LOCATION_GAP',
           severity: 'MEDIUM',
-          message: `${left.courseCode} va ${right.courseCode} cảnh báo di chuyển gấp vào ngày ${left.weekday}`,
-          metadata: { left, right, gap },
+          message: `${left.courseCode} va ${right.courseCode} cảnh báo di chuyển gấp (cách ${gap} phút, ${leftBuilding}→${rightBuilding}) vào ngày ${left.weekday}`,
+          metadata: { left, right, gap, leftBuilding, rightBuilding },
         });
       }
     }

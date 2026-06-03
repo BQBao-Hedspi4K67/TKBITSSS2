@@ -801,6 +801,39 @@ button {
   }
 }
 
+@keyframes tempo-location-gap-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-1px);
+  }
+  40% {
+    transform: translateX(1px);
+  }
+  60% {
+    transform: translateX(-0.5px);
+  }
+  80% {
+    transform: translateX(0.5px);
+  }
+}
+
+.tempo-calendar-event.is-location-gap {
+  background: linear-gradient(180deg, rgba(254, 243, 199, 0.98), rgba(253, 224, 112, 0.95)) !important;
+  border-color: #d97706 !important;
+  color: #92400e !important;
+  box-shadow: 0 0 0 2px rgba(251, 191, 36, 0.28), 0 14px 28px rgba(146, 64, 14, 0.16) !important;
+  animation: tempo-location-gap-shake 0.9s ease-in-out infinite;
+}
+
+.tempo-calendar-event.is-location-gap .tempo-calendar-event-meta,
+.tempo-calendar-event.is-location-gap .tempo-calendar-event-title,
+.tempo-calendar-event.is-location-gap .tempo-calendar-event-code {
+  color: inherit;
+}
+
 .tempo-calendar-event.is-selected {
   box-shadow: 0 0 0 2px rgba(55, 138, 221, 0.24), 0 14px 28px rgba(15, 23, 42, 0.13);
 }

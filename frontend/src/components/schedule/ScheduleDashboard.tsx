@@ -247,14 +247,11 @@ export function ScheduleDashboard({ sections, subject, selectedClassCode, onChoo
       .sort((left, right) => left.courseCode.localeCompare(right.courseCode));
   }, [groupedByCourse]);
 
-  const conflictSectionIds = useMemo(() => {
-    const ids = new Set<string>();
+  const { overlapSectionIds, locationGapSectionIds } = useMemo(() => {
+    const overlap = new Set<string>();
+    const locationGap = new Set<string>();
 
     conflicts.forEach((conflict) => {
-      if (conflict.type !== 'TIME_OVERLAP') {
-        return;
-      }
-
       const metadata = conflict.metadata as {
         left?: { id?: string };
         right?: { id?: string };
@@ -263,16 +260,16 @@ export function ScheduleDashboard({ sections, subject, selectedClassCode, onChoo
       const leftId = metadata?.left?.id;
       const rightId = metadata?.right?.id;
 
-      if (leftId) {
-        ids.add(leftId);
-      }
-
-      if (rightId) {
-        ids.add(rightId);
+      if (conflict.type === 'TIME_OVERLAP') {
+        if (leftId) overlap.add(leftId);
+        if (rightId) overlap.add(rightId);
+      } else if (conflict.type === 'LOCATION_GAP') {
+        if (leftId) locationGap.add(leftId);
+        if (rightId) locationGap.add(rightId);
       }
     });
 
-    return ids;
+    return { overlapSectionIds: overlap, locationGapSectionIds: locationGap };
   }, [conflicts]);
 
   const activeClass = subject?.classes.find((classItem) => classItem.classCode === selectedClassCode) ?? null;
@@ -350,12 +347,14 @@ export function ScheduleDashboard({ sections, subject, selectedClassCode, onChoo
                       const width = `${100 / event.columnCount}%`;
                       const left = `calc(${(100 / event.columnCount) * event.columnIndex}% + ${event.columnIndex === 0 ? 0 : 4}px)`;
                       const adjustedWidth = `calc(${width} - ${event.columnIndex === event.columnCount - 1 ? 0 : 4}px)`;
-                      const isConflict = conflictSectionIds.has(event.section.id);
+                      const hasOverlap = overlapSectionIds.has(event.section.id);
+                      const hasLocationGap = locationGapSectionIds.has(event.section.id);
                       const eventClassName = [
                         'tempo-calendar-event',
                         event.kind === 'preview' ? 'tempo-calendar-event--preview' : 'is-selected',
                         event.columnCount > 1 ? 'is-overlap' : '',
-                        isConflict ? 'is-conflict' : '',
+                        hasOverlap ? 'is-conflict' : '',
+                        !hasOverlap && hasLocationGap ? 'is-location-gap' : '',
                         event.kind === 'preview' && event.isDisabled ? 'is-disabled' : '',
                       ]
                         .filter(Boolean)

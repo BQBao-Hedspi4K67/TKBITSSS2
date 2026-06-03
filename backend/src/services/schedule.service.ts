@@ -15,6 +15,12 @@ type ScheduleItemInput = {
   color?: string | null;
 };
 
+function extractBuilding(room: string): string {
+  // Extract building from room name, e.g. "D9-503" → "D9", "B201" → "B", "A105" → "A"
+  const match = room.match(/^([A-Za-z]+\d*)/);
+  return match ? match[1] : room;
+}
+
 function generateShareSlug(): string {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
   const randomPart = Array.from({ length: 8 }, () => chars.charAt(Math.floor(Math.random() * chars.length))).join('');
@@ -63,15 +69,19 @@ export function detectTimeConflicts(items: ScheduleItemInput[]) {
 
 
       const gapMinutes = Math.min(Math.abs(rightStart - leftEnd), Math.abs(leftStart - rightEnd));
-      const differentRoom = left.room !== right.room;
-      if (differentRoom && gapMinutes > 0 && gapMinutes < 10) {
+      const leftBuilding = extractBuilding(left.room);
+      const rightBuilding = extractBuilding(right.room);
+      const differentBuilding = leftBuilding !== rightBuilding;
+      if (differentBuilding && gapMinutes > 0 && gapMinutes < 15) {
         conflicts.push({
           type: ConflictType.LOCATION_GAP,
           severity: ConflictSeverity.MEDIUM,
-          message: `${left.courseCode} va ${right.courseCode} cảnh báo di chuyển gấp vào ngày ${left.weekday}`,
+          message: `${left.courseCode} va ${right.courseCode} cảnh báo di chuyển gấp (cách ${gapMinutes} phút, ${leftBuilding}→${rightBuilding}) vào ngày ${left.weekday}`,
           metadata: {
             weekday: left.weekday,
             gapMinutes,
+            leftBuilding,
+            rightBuilding,
             left,
             right,
           },

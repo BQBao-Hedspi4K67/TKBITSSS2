@@ -7,6 +7,7 @@ import { ScheduleDashboard } from '../components/schedule/ScheduleDashboard';
 import { SavedSchedulesPanel } from '../components/schedule/SavedSchedulesPanel';
 import { ShareScheduleModal } from '../components/schedule/ShareScheduleModal';
 import { ChatPanel } from '../components/chat/ChatPanel';
+import { ConflictFilterPanel } from '../components/schedule/ConflictFilterPanel';
 import { useTimetableImport } from '../hooks/useTimetableImport';
 import { useAuth } from '../hooks/useAuth';
 import { deleteSchedule, getCurrentTimetable, getUserSelections, listSchedules, saveSchedule, updateSchedule, uploadTimetable } from '../services/timetableService';
@@ -41,6 +42,10 @@ export function ScheduleBuilderPage() {
   const [shareModalSchedule, setShareModalSchedule] = useState<SavedSchedule | null>(null);
 
   const localConflicts = useMemo(() => detectLocalConflicts(selectedSections), [selectedSections]);
+  const hasOverlapConflicts = useMemo(
+    () => localConflicts.some((c) => c.type === 'TIME_OVERLAP'),
+    [localConflicts],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -158,7 +163,7 @@ export function ScheduleBuilderPage() {
       return;
     }
 
-    if (localConflicts.length > 0) {
+    if (hasOverlapConflicts) {
       setSaveConflictOpen(true);
       setSaveDialogOpen(false);
       return;
@@ -183,7 +188,7 @@ export function ScheduleBuilderPage() {
       return;
     }
 
-    if (localConflicts.length > 0) {
+    if (hasOverlapConflicts) {
       setSaveDialogOpen(false);
       setSaveConflictOpen(true);
       return;
@@ -422,10 +427,15 @@ export function ScheduleBuilderPage() {
             ) : null}
 
             {activeTab === 'conflicts' ? (
-              <section className="tempo-surface-card tempo-placeholder-panel">
-                <h3>Bộ lọc & Xung đột</h3>
-                <p>Bộ lọc và cảnh báo sẽ tiếp tục mở rộng trên cùng dữ liệu DB thật.</p>
-              </section>
+              <ConflictFilterPanel
+                selectedSections={selectedSections}
+                subjects={subjects}
+                suggestedSubjects={suggestedSubjects}
+                onChooseClass={chooseClass}
+                onSelectSubject={setSelectedSubjectCode}
+                onAddSuggestedClass={chooseClass}
+                onGoToDashboard={() => setActiveTab('dashboard')}
+              />
             ) : null}
           </main>
         </div>
