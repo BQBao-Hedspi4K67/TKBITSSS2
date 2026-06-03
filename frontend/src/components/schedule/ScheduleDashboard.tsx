@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import type { ReactNode } from 'react';
 import type { ConflictPreview } from '../../types/timetable';
 import { detectLocalConflicts, getCourseTheme, parseSectionTimeRange } from '../../utils/timetable';
 import type { TimetableClass, TimetableSection, TimetableSubject } from '../../types/timetable';
@@ -11,6 +12,7 @@ type ScheduleDashboardProps = {
   selectedClassCode?: string;
   onChooseClass: (classItem: TimetableClass) => void;
   showHeader?: boolean;
+  toolbarActions?: ReactNode;
 };
 
 type CalendarRange = {
@@ -100,7 +102,7 @@ function layoutOverlapColumns(events: CalendarEventItem[]) {
   });
 }
 
-export function ScheduleDashboard({ sections, subject, selectedClassCode, onChooseClass, showHeader = true }: ScheduleDashboardProps) {
+export function ScheduleDashboard({ sections, subject, selectedClassCode, onChooseClass, showHeader = true, toolbarActions }: ScheduleDashboardProps) {
   const [detailEvent, setDetailEvent] = useState<LayoutEventItem | null>(null);
   const conflicts: ConflictPreview[] = detectLocalConflicts(sections);
   const weekdayOrder = ['2', '3', '4', '5', '6', '7', 'CN'];
@@ -293,6 +295,9 @@ export function ScheduleDashboard({ sections, subject, selectedClassCode, onChoo
 
       <div className="tempo-calendar-shell">
         <div className="tempo-calendar-toolbar-row">
+          {toolbarActions ? (
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginLeft: 'auto' }}>{toolbarActions}</div>
+          ) : null}
           <div className="tempo-calendar-legend">
             {legendItems.length > 0 ? (
               legendItems.map((item) => (

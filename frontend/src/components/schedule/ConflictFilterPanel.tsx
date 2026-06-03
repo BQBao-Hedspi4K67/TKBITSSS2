@@ -97,6 +97,11 @@ export function ConflictFilterPanel({ selectedSections, subjects, suggestedSubje
       .slice(0, 6);
   }, [suggestedSubjects]);
 
+  const subjectsSelected = useMemo(
+    () => subjects.filter((s) => selectedCourseCodes.has(s.courseCode)),
+    [subjects, selectedCourseCodes],
+  );
+
   return (
     <div className="tempo-surface-card">
       <div className="tempo-panel-toolbar">
@@ -125,65 +130,69 @@ export function ConflictFilterPanel({ selectedSections, subjects, suggestedSubje
         </div>
       )}
 
-      {/* Chọn lớp học cho từng môn — hiển thị TẤT CẢ môn có trong batch */}
+      {/* Chọn lớp học cho từng môn — chỉ hiển thị môn đã chọn */}
       <div style={{ borderTop: '1px solid var(--color-border-tertiary)', paddingTop: 16, marginTop: 4, marginBottom: 20 }}>
         <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Chọn lớp học cho từng môn</div>
-        <div style={{ display: 'grid', gap: 14 }}>
-          {subjects.map((subject) => {
-            const selectedClass = selectedSections.find((sec) => sec.courseCode === subject.courseCode);
-            const theme = getCourseTheme(subject.courseCode);
-            const isSelected = selectedCourseCodes.has(subject.courseCode);
-            return (
-              <div key={subject.courseCode} style={{ border: '1px solid var(--color-border-tertiary)', borderRadius: 12, padding: 14, opacity: isSelected ? 1 : 0.85 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
-                  <span style={{ width: 10, height: 10, borderRadius: '50%', background: theme.accent, flexShrink: 0 }} />
-                  <span style={{ fontWeight: 600, fontSize: 13 }}>{subject.courseCode} — {subject.courseName}</span>
-                  <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginLeft: 'auto' }}>{subject.creditWeight} tín</span>
-                  {!isSelected && <span style={{ fontSize: 10, color: 'var(--color-text-tertiary)' }}>Chưa chọn</span>}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  {subject.classes.map((cls) => {
-                    const firstSection = cls.sections[0];
-                    if (!firstSection) return null;
-                    const isSel = cls.classCode === selectedClass?.classCode;
-                    const full = isClassFull(firstSection);
-                    return (
-                      <label
-                        key={cls.classCode}
-                        style={{
-                          display: 'flex', alignItems: 'center', gap: 8,
-                          padding: '8px 10px', borderRadius: 8, cursor: full ? 'not-allowed' : 'pointer',
-                          background: isSel ? 'var(--color-background-info)' : 'transparent',
-                          border: isSel ? '1px solid var(--color-accent)' : '1px solid var(--color-border-tertiary)',
-                          opacity: full ? 0.5 : 1, fontSize: 12,
-                        }}
-                      >
-                        <input
-                          type="radio"
-                          name={`class-${subject.courseCode}`}
-                          checked={isSel}
-                          disabled={full}
-                          onChange={() => onChooseClass(cls)}
-                        />
-                        <div style={{ flex: 1 }}>
-                          <div style={{ fontWeight: 500 }}>{cls.classCode}</div>
-                          <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>
-                            {firstSection.weekday ? `Thứ ${firstSection.weekday}` : ''} · {firstSection.startTime}–{firstSection.endTime} · {firstSection.room}
+        {subjectsSelected.length === 0 ? (
+          <div style={{ padding: 12, border: '1px solid var(--color-border-tertiary)', borderRadius: 10, fontSize: 12, color: 'var(--color-text-tertiary)', textAlign: 'center' }}>
+            Bạn chưa chọn môn nào. Hãy chọn môn từ tab Upload hoặc Dashboard.
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gap: 14 }}>
+            {subjectsSelected.map((subject) => {
+              const selectedClass = selectedSections.find((sec) => sec.courseCode === subject.courseCode);
+              const theme = getCourseTheme(subject.courseCode);
+              return (
+                <div key={subject.courseCode} style={{ border: '1px solid var(--color-border-tertiary)', borderRadius: 12, padding: 14 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: theme.accent, flexShrink: 0 }} />
+                    <span style={{ fontWeight: 600, fontSize: 13 }}>{subject.courseCode} — {subject.courseName}</span>
+                    <span style={{ fontSize: 11, color: 'var(--color-text-tertiary)', marginLeft: 'auto' }}>{subject.creditWeight} tín</span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+                    {subject.classes.map((cls) => {
+                      const firstSection = cls.sections[0];
+                      if (!firstSection) return null;
+                      const isSel = cls.classCode === selectedClass?.classCode;
+                      const full = isClassFull(firstSection);
+                      return (
+                        <label
+                          key={cls.classCode}
+                          style={{
+                            display: 'flex', alignItems: 'center', gap: 8,
+                            padding: '8px 10px', borderRadius: 8, cursor: full ? 'not-allowed' : 'pointer',
+                            background: isSel ? 'var(--color-background-info)' : 'transparent',
+                            border: isSel ? '1px solid var(--color-accent)' : '1px solid var(--color-border-tertiary)',
+                            opacity: full ? 0.5 : 1, fontSize: 12,
+                          }}
+                        >
+                          <input
+                            type="radio"
+                            name={`class-${subject.courseCode}`}
+                            checked={isSel}
+                            disabled={full}
+                            onChange={() => onChooseClass(cls)}
+                          />
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 500 }}>{cls.classCode}</div>
+                            <div style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>
+                              {firstSection.weekday ? `Thứ ${firstSection.weekday}` : ''} · {firstSection.startTime}–{firstSection.endTime} · {firstSection.room}
+                            </div>
                           </div>
-                        </div>
-                        {full ? (
-                          <span style={{ fontSize: 10, color: '#a32d2d', background: '#fcebeb', padding: '1px 6px', borderRadius: 4 }}>Đầy ({firstSection.enrollmentCount}/{firstSection.maxSeats})</span>
-                        ) : (
-                          <span style={{ fontSize: 10, color: '#27500a', background: '#eaf3de', padding: '1px 6px', borderRadius: 4 }}>{firstSection.enrollmentCount}/{firstSection.maxSeats}</span>
-                        )}
-                      </label>
-                    );
-                  })}
+                          {full ? (
+                            <span style={{ fontSize: 10, color: '#a32d2d', background: '#fcebeb', padding: '1px 6px', borderRadius: 4 }}>Đầy ({firstSection.enrollmentCount}/{firstSection.maxSeats})</span>
+                          ) : (
+                            <span style={{ fontSize: 10, color: '#27500a', background: '#eaf3de', padding: '1px 6px', borderRadius: 4 }}>{firstSection.enrollmentCount}/{firstSection.maxSeats}</span>
+                          )}
+                        </label>
+                      );
+                    })}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
-        </div>
+              );
+            })}
+          </div>
+        )}
       </div>
 
       {/* Môn học đề xuất — max 6, ưu tiên IT */}

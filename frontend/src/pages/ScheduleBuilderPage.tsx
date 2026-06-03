@@ -8,6 +8,8 @@ import { SavedSchedulesPanel } from '../components/schedule/SavedSchedulesPanel'
 import { ShareScheduleModal } from '../components/schedule/ShareScheduleModal';
 import { ChatPanel } from '../components/chat/ChatPanel';
 import { ConflictFilterPanel } from '../components/schedule/ConflictFilterPanel';
+import { AutoScheduleModal } from '../components/schedule/AutoScheduleModal';
+import type { TimetableClass } from '../types/timetable';
 import { useTimetableImport } from '../hooks/useTimetableImport';
 import { useAuth } from '../hooks/useAuth';
 import { deleteSchedule, getCurrentTimetable, getUserSelections, listSchedules, saveSchedule, updateSchedule, uploadTimetable } from '../services/timetableService';
@@ -40,6 +42,8 @@ export function ScheduleBuilderPage() {
   const [previousSelectionSnapshot, setPreviousSelectionSnapshot] = useState<Array<{ courseCode: string; classCode: string | null }> | null>(null);
   const [previousActiveSubjectCode, setPreviousActiveSubjectCode] = useState<string | null>(null);
   const [shareModalSchedule, setShareModalSchedule] = useState<SavedSchedule | null>(null);
+  const [autoScheduleOpen, setAutoScheduleOpen] = useState(false);
+  const [autoScheduleErrorMessage, setAutoScheduleErrorMessage] = useState<string | null>(null);
 
   const localConflicts = useMemo(() => detectLocalConflicts(selectedSections), [selectedSections]);
   const hasOverlapConflicts = useMemo(
@@ -331,6 +335,23 @@ export function ScheduleBuilderPage() {
               </section>
             ) : null}
 
+            {autoScheduleOpen && (
+              <AutoScheduleModal
+                subjects={subjects.filter((s) => selectedSubjectCodes.includes(s.courseCode))}
+                onClose={() => setAutoScheduleOpen(false)}
+                onApply={(result) => {
+                  // Set selection snapshot to all chosen classes
+                  const snapshot = result.classes.map((cls) => ({
+                    courseCode: cls.courseCode,
+                    classCode: cls.classCode,
+                  }));
+                  setSelectionSnapshot(snapshot, snapshot[0]?.courseCode ?? null);
+                  setAutoScheduleOpen(false);
+                  setStatusMessage(`Đã xếp ${result.classes.length} lớp theo yêu cầu.`);
+                }}
+              />
+            )}
+
             {activeTab === 'dashboard' ? (
               <section className="tempo-surface-card tempo-dashboard-workbench">
                 <div className="tempo-dashboard-workbench-left">
@@ -364,6 +385,18 @@ export function ScheduleBuilderPage() {
                     selectedClassCode={dashboardSelectedClassCode}
                     onChooseClass={chooseClass}
                     showHeader={false}
+                    toolbarActions={
+                      <button
+                        type="button"
+                        className="tempo-primary-button"
+                        onClick={() => setAutoScheduleOpen(true)}
+                        disabled={selectedSubjectCodes.length === 0}
+                        style={{ padding: '8px 14px', fontSize: 13, whiteSpace: 'nowrap' }}
+                        title="Hệ thống sẽ tự động chọn lịch phù hợp"
+                      >
+                        🪄 Xếp lịch tự động
+                      </button>
+                    }
                   />
                 </div>
               </section>
