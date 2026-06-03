@@ -199,6 +199,39 @@ If port `5173` is already occupied, Vite will automatically fall back to the nex
 
 If XAMPP MySQL is already using a different port, change `DATABASE_URL` accordingly before starting the backend.
 
+## Deployment
+
+### Render backend
+
+1. Create a new Render Web Service from this repository.
+2. Use the `render.yaml` blueprint in the repo root, or set these values manually:
+	- Root Directory: `backend`
+	- Build Command: `npm install && npm run prisma:generate && npm run build`
+	- Start Command: `npm start`
+3. Set the environment variables in Render:
+	- `NODE_ENV=production`
+	- `PORT=10000` or leave Render to assign the port and keep the app reading `process.env.PORT`
+	- `DATABASE_URL=<your TiDB Cloud MySQL URL with ?sslaccept=strict>`
+	- `JWT_SECRET=<strong production secret>`
+	- `JWT_EXPIRES_IN=7d`
+	- `CORS_ORIGIN=*`
+4. Deploy and copy the Render backend URL, for example `https://tempo-backend.onrender.com`.
+
+### Vercel frontend
+
+1. Create a new Vercel project from the same repository.
+2. Set the Root Directory to `frontend`.
+3. Set the environment variable:
+	- `VITE_API_URL=https://tempo-backend.onrender.com/api`
+4. Deploy.
+5. If you change the backend domain later, update `VITE_API_URL` and redeploy the frontend.
+
+### Notes
+
+- The frontend uses React Router with `BrowserRouter`, so the `frontend/vercel.json` rewrite is required for refresh and direct links to work.
+- The backend CORS setting already allows all origins with `CORS_ORIGIN=*`, which is suitable for deploy-time frontend domains.
+- TiDB Cloud requires `?sslaccept=strict` in the MySQL connection string.
+
 ## Demo Login
 
 - Email: `student@tempo.local`

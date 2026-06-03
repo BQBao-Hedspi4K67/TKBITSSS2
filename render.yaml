@@ -1,0 +1,8 @@
+services:
+  - type: web
+    name: tempo-backend
+    env: node
+    rootDir: backend
+    buildCommand: npm install && npm run prisma:generate && npm run build
+    startCommand: npm start
+    autoDeploy: true
