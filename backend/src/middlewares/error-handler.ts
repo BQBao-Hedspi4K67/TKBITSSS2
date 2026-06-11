@@ -6,7 +6,7 @@ import { HttpError } from '../utils/http-error';
 export function errorHandler(error: unknown, _req: Request, res: Response, _next: NextFunction) {
   if (error instanceof ZodError) {
     return res.status(400).json({
-      message: 'Du lieu dau vao khong hop le',
+      message: 'Dữ liệu đầu vào không hợp lệ',
       code: 'VALIDATION_ERROR',
       errors: error.flatten(),
     });
@@ -23,20 +23,20 @@ export function errorHandler(error: unknown, _req: Request, res: Response, _next
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     if (error.code === 'P2002') {
       return res.status(409).json({
-        message: 'Du lieu da ton tai',
+        message: 'Dữ liệu đã tồn tại',
         code: error.code,
       });
     }
 
     return res.status(400).json({
-      message: 'Du lieu vi pham rang buoc co so du lieu',
+      message: 'Dữ liệu vi phạm ràng buộc cơ sở dữ liệu',
       code: error.code,
     });
   }
 
   console.error(error);
   return res.status(500).json({
-    message: 'Internal server error',
+    message: 'Lỗi máy chủ nội bộ',
     code: 'INTERNAL_SERVER_ERROR',
   });
 }

@@ -47,7 +47,7 @@ export function LoginPage() {
               if (mode === 'register') {
                 const registerPayload = payload as RegisterPayload;
                 if (registerPayload.password !== registerPayload.confirmPassword) {
-                  throw new Error('Mat khau xac nhan khong khop');
+                  throw new Error('Mật khẩu xác nhận không khớp');
                 }
 
                 response = await register({
@@ -64,7 +64,7 @@ export function LoginPage() {
               setSession(response.token, response.user);
               navigate('/app', { replace: true });
             } catch (exception) {
-              setError(exception instanceof Error ? exception.message : mode === 'register' ? 'Dang ky that bai' : 'Dang nhap that bai');
+              setError(exception instanceof Error ? exception.message : mode === 'register' ? 'Đăng ký thất bại' : 'Đăng nhập thất bại');
             } finally {
               setLoading(false);
             }

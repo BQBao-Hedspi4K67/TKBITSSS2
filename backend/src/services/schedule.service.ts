@@ -57,7 +57,7 @@ export function detectTimeConflicts(items: ScheduleItemInput[]) {
         conflicts.push({
           type: ConflictType.TIME_OVERLAP,
           severity: ConflictSeverity.HIGH,
-          message: `${left.courseCode} va ${right.courseCode} trùng giờ vào ngày thứ ${left.weekday}`,
+          message: `${left.courseCode} và ${right.courseCode} trùng giờ vào ngày thứ ${left.weekday}`,
           metadata: {
             weekday: left.weekday,
             left,
@@ -76,7 +76,7 @@ export function detectTimeConflicts(items: ScheduleItemInput[]) {
         conflicts.push({
           type: ConflictType.LOCATION_GAP,
           severity: ConflictSeverity.MEDIUM,
-          message: `${left.courseCode} va ${right.courseCode} cảnh báo di chuyển gấp (cách ${gapMinutes} phút, ${leftBuilding}→${rightBuilding}) vào ngày ${left.weekday}`,
+          message: `${left.courseCode} và ${right.courseCode} cảnh báo di chuyển gấp (cách ${gapMinutes} phút, ${leftBuilding}→${rightBuilding}) vào ngày ${left.weekday}`,
           metadata: {
             weekday: left.weekday,
             gapMinutes,
@@ -102,7 +102,7 @@ export async function previewConflicts(userId: string, sectionIds: string[]) {
   });
 
   if (!items.length) {
-    throw new HttpError(404, 'Khong tim thay du lieu de kiem tra xung dot', { code: 'SCHEDULE_ITEMS_NOT_FOUND' });
+    throw new HttpError(404, 'Không tìm thấy dữ liệu để kiểm tra xung đột', { code: 'SCHEDULE_ITEMS_NOT_FOUND' });
   }
 
   return detectTimeConflicts(
@@ -130,7 +130,7 @@ export async function saveSchedule(
     });
 
     if (!sourceBatch) {
-      throw new HttpError(404, 'Khong tim thay batch nguon cua ban', { code: 'SOURCE_BATCH_NOT_FOUND' });
+      throw new HttpError(404, 'Không tìm thấy batch nguồn của bạn', { code: 'SOURCE_BATCH_NOT_FOUND' });
     }
   }
 
@@ -142,7 +142,7 @@ export async function saveSchedule(
   });
 
   if (sourceItems.length !== input.sectionIds.length) {
-    throw new HttpError(400, 'Mot hoac nhieu lop khong ton tai hoac khong thuoc ve ban', { code: 'INVALID_SCHEDULE_ITEMS' });
+    throw new HttpError(400, 'Một hoặc nhiều lớp không tồn tại hoặc không thuộc về bạn', { code: 'INVALID_SCHEDULE_ITEMS' });
   }
 
   const conflicts = detectTimeConflicts(
@@ -218,7 +218,7 @@ export async function updateSchedule(
   });
 
   if (!existingSchedule) {
-    throw new HttpError(404, 'Khong tim thay lich hoc', { code: 'SCHEDULE_NOT_FOUND' });
+    throw new HttpError(404, 'Không tìm thấy lịch học', { code: 'SCHEDULE_NOT_FOUND' });
   }
 
   if (input.sourceBatchId) {
@@ -227,7 +227,7 @@ export async function updateSchedule(
     });
 
     if (!sourceBatch) {
-      throw new HttpError(404, 'Khong tim thay batch nguon cua ban', { code: 'SOURCE_BATCH_NOT_FOUND' });
+      throw new HttpError(404, 'Không tìm thấy batch nguồn của bạn', { code: 'SOURCE_BATCH_NOT_FOUND' });
     }
   }
 
@@ -239,7 +239,7 @@ export async function updateSchedule(
   });
 
   if (sourceItems.length !== input.sectionIds.length) {
-    throw new HttpError(400, 'Mot hoac nhieu lop khong ton tai hoac khong thuoc ve ban', { code: 'INVALID_SCHEDULE_ITEMS' });
+    throw new HttpError(400, 'Một hoặc nhiều lớp không tồn tại hoặc không thuộc về bạn', { code: 'INVALID_SCHEDULE_ITEMS' });
   }
 
   const conflicts = detectTimeConflicts(
@@ -323,7 +323,7 @@ export async function deleteSchedule(userId: string, scheduleId: string) {
   });
 
   if (!schedule) {
-    throw new HttpError(404, 'Khong tim thay lich hoc', { code: 'SCHEDULE_NOT_FOUND' });
+    throw new HttpError(404, 'Không tìm thấy lịch học', { code: 'SCHEDULE_NOT_FOUND' });
   }
 
   await prisma.schedule.delete({
@@ -351,7 +351,7 @@ export async function getScheduleById(userId: string, scheduleId: string) {
   });
 
   if (!schedule) {
-    throw new HttpError(404, 'Khong tim thay lich hoc', { code: 'SCHEDULE_NOT_FOUND' });
+    throw new HttpError(404, 'Không tìm thấy lịch học', { code: 'SCHEDULE_NOT_FOUND' });
   }
 
   return schedule;
@@ -377,11 +377,11 @@ export async function getScheduleBySlug(slug: string) {
   });
 
   if (!share) {
-    throw new HttpError(404, 'Khong tim thay lich chia se', { code: 'SHARE_NOT_FOUND' });
+    throw new HttpError(404, 'Không tìm thấy lịch chia sẻ', { code: 'SHARE_NOT_FOUND' });
   }
 
   if (share.expiresAt && share.expiresAt < new Date()) {
-    throw new HttpError(410, 'Lich chia se da het han', { code: 'SHARE_EXPIRED' });
+    throw new HttpError(410, 'Lịch chia sẻ đã hết hạn', { code: 'SHARE_EXPIRED' });
   }
 
   return {
@@ -403,7 +403,7 @@ export async function createShare(
   });
 
   if (!schedule) {
-    throw new HttpError(404, 'Khong tim thay lich hoc', { code: 'SCHEDULE_NOT_FOUND' });
+    throw new HttpError(404, 'Không tìm thấy lịch học', { code: 'SCHEDULE_NOT_FOUND' });
   }
 
   // Check if there's already an active share for this schedule
@@ -433,7 +433,7 @@ export async function listShares(userId: string, scheduleId: string) {
   });
 
   if (!schedule) {
-    throw new HttpError(404, 'Khong tim thay lich hoc', { code: 'SCHEDULE_NOT_FOUND' });
+    throw new HttpError(404, 'Không tìm thấy lịch học', { code: 'SCHEDULE_NOT_FOUND' });
   }
 
   return prisma.scheduleShare.findMany({
@@ -460,11 +460,11 @@ export async function updateShare(
   });
 
   if (!share) {
-    throw new HttpError(404, 'Khong tim thay chia se', { code: 'SHARE_NOT_FOUND' });
+    throw new HttpError(404, 'Không tìm thấy chia sẻ', { code: 'SHARE_NOT_FOUND' });
   }
 
   if (share.schedule.userId !== userId) {
-    throw new HttpError(403, 'Khong co quyen cap nhat chia se nay', { code: 'FORBIDDEN' });
+    throw new HttpError(403, 'Không có quyền cập nhật chia sẻ này', { code: 'FORBIDDEN' });
   }
 
   return prisma.scheduleShare.update({
@@ -483,11 +483,11 @@ export async function deleteShare(userId: string, shareId: string) {
   });
 
   if (!share) {
-    throw new HttpError(404, 'Khong tim thay chia se', { code: 'SHARE_NOT_FOUND' });
+    throw new HttpError(404, 'Không tìm thấy chia sẻ', { code: 'SHARE_NOT_FOUND' });
   }
 
   if (share.schedule.userId !== userId) {
-    throw new HttpError(403, 'Khong co quyen xoa chia se nay', { code: 'FORBIDDEN' });
+    throw new HttpError(403, 'Không có quyền xóa chia sẻ này', { code: 'FORBIDDEN' });
   }
 
   await prisma.scheduleShare.delete({ where: { id: shareId } });

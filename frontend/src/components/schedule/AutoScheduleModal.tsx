@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { autoSchedule, type AutoScheduleStrategy } from '../../utils/autoSchedule';
+import { autoScheduleMultiStrategies, type AutoScheduleStrategy } from '../../utils/autoSchedule';
 import type { TimetableClass, TimetableSection, TimetableSubject } from '../../types/timetable';
 
 type AutoScheduleModalProps = {
@@ -18,7 +18,7 @@ const WEEKDAY_OPTIONS = [
 ];
 
 export function AutoScheduleModal({ subjects, onClose, onApply }: AutoScheduleModalProps) {
-  const [strategy, setStrategy] = useState<AutoScheduleStrategy>('NO_OVERLAP');
+  const [strategies, setStrategies] = useState<Set<AutoScheduleStrategy>>(new Set(['NO_OVERLAP']));
   const [offSessions, setOffSessions] = useState<Set<string>>(new Set());
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -31,19 +31,22 @@ export function AutoScheduleModal({ subjects, onClose, onApply }: AutoScheduleMo
     });
   };
 
+  const toggleStrategy = (strat: AutoScheduleStrategy) => {
+    setStrategies((prev) => {
+      const next = new Set(prev);
+      if (next.has(strat)) next.delete(strat);
+      else next.add(strat);
+      return next;
+    });
+    setErrorMessage(null);
+  };
+
   const handleGenerate = () => {
     setErrorMessage(null);
-    const result = autoSchedule(subjects, strategy, offSessions);
+    const strategyArray = Array.from(strategies.values());
+    const result = autoScheduleMultiStrategies(subjects, strategyArray, offSessions);
     if (!result) {
-      setErrorMessage(
-        strategy === 'CUSTOM_DAY_OFF'
-          ? 'Không tìm thấy lịch phù hợp với các buổi nghỉ đã chọn. Vui lòng chọn ít buổi nghỉ hơn.'
-          : strategy === 'NO_OVERLAP'
-            ? 'Không tìm thấy lịch nào không bị trùng giờ. Vui lòng thử chiến lược khác.'
-            : strategy === 'CONVENIENT_TRAVEL'
-              ? 'Không tìm thấy lịch nào không bị cảnh báo di chuyển. Vui lòng thử chiến lược khác.'
-              : 'Không tìm thấy lịch phù hợp. Vui lòng thử lại.',
-      );
+      setErrorMessage('Không tìm thấy lịch phù hợp. Vui lòng thử giảm ràng buộc hoặc bỏ chọn một số điều kiện.');
       return;
     }
     onApply(result);
@@ -76,11 +79,11 @@ export function AutoScheduleModal({ subjects, onClose, onApply }: AutoScheduleMo
             style={{
               display: 'flex', alignItems: 'flex-start', gap: 10,
               padding: '10px 12px', border: '1px solid var(--color-border-tertiary)', borderRadius: 10, cursor: 'pointer',
-              background: strategy === 'NO_OVERLAP' ? 'var(--color-background-info)' : 'transparent',
-              borderColor: strategy === 'NO_OVERLAP' ? 'var(--color-accent)' : 'var(--color-border-tertiary)',
+              background: strategies.has('NO_OVERLAP') ? 'var(--color-background-info)' : 'transparent',
+              borderColor: strategies.has('NO_OVERLAP') ? 'var(--color-accent)' : 'var(--color-border-tertiary)',
             }}
           >
-            <input type="radio" name="strategy" checked={strategy === 'NO_OVERLAP'} onChange={() => { setStrategy('NO_OVERLAP'); setErrorMessage(null); }} />
+            <input type="checkbox" checked={strategies.has('NO_OVERLAP')} onChange={() => toggleStrategy('NO_OVERLAP')} />
             <div>
               <div style={{ fontWeight: 600, fontSize: 13 }}>📅 Xếp lịch không trùng lớp học</div>
               <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 2 }}>
@@ -93,11 +96,11 @@ export function AutoScheduleModal({ subjects, onClose, onApply }: AutoScheduleMo
             style={{
               display: 'flex', alignItems: 'flex-start', gap: 10,
               padding: '10px 12px', border: '1px solid var(--color-border-tertiary)', borderRadius: 10, cursor: 'pointer',
-              background: strategy === 'CONVENIENT_TRAVEL' ? 'var(--color-background-info)' : 'transparent',
-              borderColor: strategy === 'CONVENIENT_TRAVEL' ? 'var(--color-accent)' : 'var(--color-border-tertiary)',
+              background: strategies.has('CONVENIENT_TRAVEL') ? 'var(--color-background-info)' : 'transparent',
+              borderColor: strategies.has('CONVENIENT_TRAVEL') ? 'var(--color-accent)' : 'var(--color-border-tertiary)',
             }}
           >
-            <input type="radio" name="strategy" checked={strategy === 'CONVENIENT_TRAVEL'} onChange={() => { setStrategy('CONVENIENT_TRAVEL'); setErrorMessage(null); }} />
+            <input type="checkbox" checked={strategies.has('CONVENIENT_TRAVEL')} onChange={() => toggleStrategy('CONVENIENT_TRAVEL')} />
             <div>
               <div style={{ fontWeight: 600, fontSize: 13 }}>🚶 Xếp lịch di chuyển thuận tiện</div>
               <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 2 }}>
@@ -110,11 +113,11 @@ export function AutoScheduleModal({ subjects, onClose, onApply }: AutoScheduleMo
             style={{
               display: 'flex', alignItems: 'flex-start', gap: 10,
               padding: '10px 12px', border: '1px solid var(--color-border-tertiary)', borderRadius: 10, cursor: 'pointer',
-              background: strategy === 'MOST_DAYS_OFF' ? 'var(--color-background-info)' : 'transparent',
-              borderColor: strategy === 'MOST_DAYS_OFF' ? 'var(--color-accent)' : 'var(--color-border-tertiary)',
+              background: strategies.has('MOST_DAYS_OFF') ? 'var(--color-background-info)' : 'transparent',
+              borderColor: strategies.has('MOST_DAYS_OFF') ? 'var(--color-accent)' : 'var(--color-border-tertiary)',
             }}
           >
-            <input type="radio" name="strategy" checked={strategy === 'MOST_DAYS_OFF'} onChange={() => { setStrategy('MOST_DAYS_OFF'); setErrorMessage(null); }} />
+            <input type="checkbox" checked={strategies.has('MOST_DAYS_OFF')} onChange={() => toggleStrategy('MOST_DAYS_OFF')} />
             <div>
               <div style={{ fontWeight: 600, fontSize: 13 }}>🏖️ Nghỉ nhiều buổi nhất trong tuần</div>
               <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 2 }}>
@@ -127,17 +130,17 @@ export function AutoScheduleModal({ subjects, onClose, onApply }: AutoScheduleMo
             style={{
               display: 'flex', alignItems: 'flex-start', gap: 10,
               padding: '10px 12px', border: '1px solid var(--color-border-tertiary)', borderRadius: 10, cursor: 'pointer',
-              background: strategy === 'CUSTOM_DAY_OFF' ? 'var(--color-background-info)' : 'transparent',
-              borderColor: strategy === 'CUSTOM_DAY_OFF' ? 'var(--color-accent)' : 'var(--color-border-tertiary)',
+              background: strategies.has('CUSTOM_DAY_OFF') ? 'var(--color-background-info)' : 'transparent',
+              borderColor: strategies.has('CUSTOM_DAY_OFF') ? 'var(--color-accent)' : 'var(--color-border-tertiary)',
             }}
           >
-            <input type="radio" name="strategy" checked={strategy === 'CUSTOM_DAY_OFF'} onChange={() => { setStrategy('CUSTOM_DAY_OFF'); setErrorMessage(null); }} />
+            <input type="checkbox" checked={strategies.has('CUSTOM_DAY_OFF')} onChange={() => toggleStrategy('CUSTOM_DAY_OFF')} />
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 600, fontSize: 13 }}>📋 Tùy chọn buổi nghỉ</div>
               <div style={{ fontSize: 11, color: 'var(--color-text-secondary)', marginTop: 2, marginBottom: 8 }}>
                 Tick chọn các buổi muốn nghỉ, hệ thống sẽ đề xuất lịch
               </div>
-              {strategy === 'CUSTOM_DAY_OFF' && (
+              {strategies.has('CUSTOM_DAY_OFF') && (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 6, marginTop: 6 }}>
                   {WEEKDAY_OPTIONS.flatMap((day) => [
                     <label key={`${day.weekday}-morning`} style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12, cursor: 'pointer' }}>

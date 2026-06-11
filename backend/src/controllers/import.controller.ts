@@ -5,7 +5,7 @@ export async function uploadTimetableController(req: Request, res: Response, nex
   try {
     if (!req.file) {
       return res.status(400).json({
-        message: 'File upload khong duoc trong',
+        message: 'File upload không được trống',
         code: 'FILE_REQUIRED',
       });
     }

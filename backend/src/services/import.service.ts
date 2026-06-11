@@ -66,11 +66,11 @@ function chunkArray<T>(items: T[], chunkSize: number) {
 
 export async function importTimetableFile(file: Express.Multer.File, userId?: string): Promise<ImportTimetableResult> {
   if (!file) {
-    throw new HttpError(400, 'File upload khong duoc trong', { code: 'FILE_REQUIRED' });
+    throw new HttpError(400, 'File upload không được trống', { code: 'FILE_REQUIRED' });
   }
 
   if (!userId) {
-    throw new HttpError(401, 'Ban can dang nhap de upload TKB', { code: 'UNAUTHORIZED' });
+    throw new HttpError(401, 'Bạn cần đăng nhập để upload TKB', { code: 'UNAUTHORIZED' });
   }
 
   const parsed = parseTimetableWorkbook(file.buffer, file.originalname);
@@ -193,7 +193,7 @@ export async function getImportBatch(batchId: string, userId: string) {
   });
 
   if (!batch) {
-    throw new HttpError(404, 'Khong tim thay import batch', { code: 'IMPORT_BATCH_NOT_FOUND' });
+    throw new HttpError(404, 'Không tìm thấy import batch', { code: 'IMPORT_BATCH_NOT_FOUND' });
   }
 
   return batch;

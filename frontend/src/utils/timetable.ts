@@ -110,7 +110,7 @@ export function formatTimeRange(section: TimetableSection) {
     return `${section.startTime} - ${section.endTime}`;
   }
 
-  return 'Chua co gio hoc';
+  return 'Chưa có giờ học';
 }
 
 export function formatOccupancy(section: TimetableSection) {
@@ -243,7 +243,7 @@ export function detectLocalConflicts(sections: TimetableSection[]): ConflictPrev
         conflicts.push({
           type: 'TIME_OVERLAP',
           severity: 'HIGH',
-          message: `${left.courseCode} va ${right.courseCode} trùng giờ vào ngày thứ ${left.weekday}`,
+          message: `${left.courseCode} và ${right.courseCode} trùng giờ vào ngày thứ ${left.weekday}`,
           metadata: { left, right },
         });
         continue;
@@ -257,7 +257,7 @@ export function detectLocalConflicts(sections: TimetableSection[]): ConflictPrev
         conflicts.push({
           type: 'LOCATION_GAP',
           severity: 'MEDIUM',
-          message: `${left.courseCode} va ${right.courseCode} cảnh báo di chuyển gấp (cách ${gap} phút, ${leftBuilding}→${rightBuilding}) vào ngày ${left.weekday}`,
+          message: `${left.courseCode} và ${right.courseCode} cảnh báo di chuyển gấp (cách ${gap} phút, ${leftBuilding}→${rightBuilding}) vào ngày ${left.weekday}`,
           metadata: { left, right, gap, leftBuilding, rightBuilding },
         });
       }

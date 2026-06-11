@@ -44,21 +44,21 @@ export function LoginForm({ mode, onSubmit, loading = false, error = null, onMod
           className={mode === 'login' ? 'is-active' : ''}
           onClick={() => onModeChange('login')}
         >
-          Dang nhap
+          Đăng nhập
         </button>
         <button
           type="button"
           className={mode === 'register' ? 'is-active' : ''}
           onClick={() => onModeChange('register')}
         >
-          Dang ky
+          Đăng ký
         </button>
       </div>
 
       {mode === 'register' ? (
         <>
           <label className="tempo-field">
-            <span>Ho va ten</span>
+            <span>Họ và tên</span>
             <input value={fullName} onChange={(event) => setFullName(event.target.value)} placeholder="Nguyen Van A" />
           </label>
 
@@ -68,7 +68,7 @@ export function LoginForm({ mode, onSubmit, loading = false, error = null, onMod
           </label>
 
           <label className="tempo-field">
-            <span>Ma sinh vien (tuy chon)</span>
+            <span>Mã sinh viên (tùy chọn)</span>
             <input
               value={studentCode}
               onChange={(event) => setStudentCode(event.target.value)}

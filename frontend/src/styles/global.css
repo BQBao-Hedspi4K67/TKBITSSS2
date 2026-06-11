@@ -199,15 +199,15 @@ button {
 }
 
 .tempo-sidebar {
-  padding: 24px 18px;
+  padding: 18px 14px;
   background: rgba(249, 250, 251, 0.96);
   border-right: 1px solid var(--color-border-tertiary);
   display: flex;
   flex-direction: column;
-  gap: 18px;
+  gap: 14px;
   position: sticky;
   top: 0;
-  width: 260px;
+  width: 200px;
   min-height: 100vh;
   overflow: auto;
   z-index: 40;
@@ -453,17 +453,29 @@ button {
   width: fit-content;
 }
 
-.tempo-dashboard-workbench {
+.tempo-dashboard-top-row {
   display: grid;
-  gap: 18px;
-  grid-template-columns: 1fr;
-  align-items: start;
+  gap: 12px;
 }
 
-.tempo-dashboard-workbench-left,
-.tempo-dashboard-workbench-right {
-  display: grid;
+.tempo-dashboard-workbench {
+  display: flex;
   gap: 16px;
+  align-items: stretch;
+  min-height: 0;
+}
+
+.tempo-dashboard-workbench-center {
+  flex: 1 1 0%;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.tempo-dashboard-workbench-right {
+  flex: 0 0 280px;
+  display: flex;
+  flex-direction: column;
 }
 
 .tempo-dashboard-class-picker {
@@ -650,7 +662,8 @@ button {
 }
 
 .tempo-calendar-board {
-  overflow-x: auto;
+  /* allow both horizontal and vertical scrolling so head and grid scroll together */
+  overflow: auto;
   border: 1px solid var(--color-border-tertiary);
   border-radius: 18px;
   background: #fff;
@@ -658,24 +671,31 @@ button {
 
 .tempo-calendar-head {
   display: grid;
-  grid-template-columns: 56px repeat(7, minmax(128px, 1fr));
+  grid-template-columns: 56px minmax(0, 1fr);
   align-items: stretch;
   border-bottom: 1px solid var(--color-border-tertiary);
   background: rgba(230, 241, 251, 0.5);
 }
 
+.tempo-calendar-head-days {
+  display: grid;
+  /* reduce each column's minimum width so all days can fit on smaller viewports */
+  grid-template-columns: repeat(6, minmax(120px, 1fr));
+}
+
 .tempo-calendar-corner {
-  min-height: 48px;
+  min-height: 40px;
   border-right: 1px solid var(--color-border-tertiary);
 }
 
 .tempo-calendar-day-head {
   display: grid;
   place-items: center;
-  min-height: 48px;
+  min-height: 40px;
   border-right: 1px solid var(--color-border-tertiary);
   font-weight: 700;
   color: var(--color-accent-dark);
+  font-size: 0.82rem;
 }
 
 .tempo-calendar-day-head:last-child {
@@ -685,7 +705,8 @@ button {
 .tempo-calendar-grid-wrap {
   display: grid;
   grid-template-columns: 56px minmax(0, 1fr);
-  min-width: 1060px;
+  /* allow grid to shrink on smaller screens; day columns control their own min width */
+  min-width: 0;
 }
 
 .tempo-calendar-time-column {
@@ -710,20 +731,20 @@ button {
 
 .tempo-calendar-days-grid {
   display: grid;
-  grid-template-columns: repeat(7, minmax(128px, 1fr));
+  grid-template-columns: repeat(6, minmax(120px, 1fr));
 }
 
 .tempo-calendar-day-column {
   position: relative;
   overflow: hidden;
   border-right: 1px solid var(--color-border-tertiary);
-  background-image: repeating-linear-gradient(
+  /*background-image: repeating-linear-gradient(
     to bottom,
     transparent 0,
     transparent 39px,
     rgba(174, 188, 207, 0.35) 39px,
     rgba(174, 188, 207, 0.35) 40px
-  );
+  );*/
 }
 
 .tempo-calendar-day-column:last-child {
@@ -901,21 +922,17 @@ button {
 }
 
 .tempo-calendar-event-code {
-  font-size: 0.72rem;
-  font-weight: 800;
+  font-size: 0.6rem;
+  font-weight: 700;
   letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
-.tempo-calendar-event-title {
-  font-size: 0.92rem;
-  font-weight: 700;
-  line-height: 1.25;
-}
+
 
 .tempo-calendar-event-meta {
-  font-size: 0.76rem;
-  line-height: 1.35;
+  font-size: 0.5rem;
+  line-height: 1.3;
   opacity: 0.86;
 }
 
@@ -2201,6 +2218,160 @@ button {
   animation: tempo-conflict-shake 1.15s ease-in-out infinite;
 }
 
+.tempo-suggestion-panel-dash {
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.94);
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  flex: 1 1 0%;
+  min-height: 0;
+}
+
+.tempo-suggestion-panel-dash-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+
+.tempo-suggestion-panel-dash-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.tempo-suggestion-panel-dash-count {
+  background: var(--color-background-info);
+  color: var(--color-accent-dark);
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 999px;
+}
+
+.tempo-suggestion-card {
+  border: 1px solid var(--color-border-tertiary);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 10px;
+  background: var(--color-background-primary);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tempo-suggestion-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(16, 24, 40, 0.08);
+}
+
+.tempo-suggestion-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.tempo-suggestion-card-name {
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.tempo-suggestion-card-score {
+  font-size: 0.75rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.tempo-suggestion-card-bar {
+  height: 3px;
+  border-radius: 2px;
+  background: var(--color-border-tertiary);
+  margin-bottom: 8px;
+}
+
+.tempo-suggestion-card-bar-fill {
+  height: 100%;
+  border-radius: 2px;
+}
+
+.tempo-suggestion-card-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-bottom: 8px;
+}
+
+.tempo-suggestion-tag {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 8px;
+  font-size: 0.68rem;
+  font-weight: 500;
+  background: #eaf3de;
+  color: #3b6d11;
+}
+
+.tempo-suggestion-tag--info {
+  background: var(--color-background-info);
+  color: var(--color-accent-dark);
+}
+
+.tempo-suggestion-mini-cal {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 1px;
+  margin-bottom: 10px;
+  background: var(--color-border-tertiary);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.tempo-suggestion-mini-day {
+  background: var(--color-background-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 4px 2px;
+}
+
+.tempo-suggestion-mini-label {
+  font-size: 0.58rem;
+  font-weight: 600;
+  color: var(--color-text-tertiary);
+  margin-bottom: 3px;
+}
+
+.tempo-suggestion-mini-track {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+}
+
+.tempo-suggestion-mini-slot {
+  width: 100%;
+  border-radius: 2px;
+}
+
+.tempo-suggestion-mini-slot.is-filled {
+  background: var(--color-accent);
+  opacity: 0.7;
+}
+
+.tempo-suggestion-card-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.tempo-suggestion-btn {
+  flex: 1;
+  font-size: 0.75rem;
+  padding: 6px 10px;
+}
+
 .tempo-conflict-card.severity-high {
   border-color: #f09595;
   background: #fcebeb;
@@ -2231,7 +2402,13 @@ button {
   }
 
   .tempo-dashboard-workbench {
-    grid-template-columns: 1fr;
+    flex-direction: column;
+  }
+
+  .tempo-dashboard-workbench-left,
+  .tempo-dashboard-workbench-right {
+    flex: 1 1 0%;
+    width: 100%;
   }
 
   .tempo-calendar-grid-wrap {

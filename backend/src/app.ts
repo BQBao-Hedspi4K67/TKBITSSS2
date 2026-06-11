@@ -34,7 +34,7 @@ app.use('/api', routes);
 
 app.use((_req, res) => {
   res.status(404).json({
-    message: 'Route khong ton tai',
+    message: 'Route không tồn tại',
     code: 'NOT_FOUND',
   });
 });

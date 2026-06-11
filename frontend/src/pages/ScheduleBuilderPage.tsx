@@ -7,8 +7,8 @@ import { ScheduleDashboard } from '../components/schedule/ScheduleDashboard';
 import { SavedSchedulesPanel } from '../components/schedule/SavedSchedulesPanel';
 import { ShareScheduleModal } from '../components/schedule/ShareScheduleModal';
 import { ChatPanel } from '../components/chat/ChatPanel';
-import { ConflictFilterPanel } from '../components/schedule/ConflictFilterPanel';
 import { AutoScheduleModal } from '../components/schedule/AutoScheduleModal';
+import { SuggestionPanel } from '../components/schedule/SuggestionPanel';
 import type { TimetableClass } from '../types/timetable';
 import { useTimetableImport } from '../hooks/useTimetableImport';
 import { useAuth } from '../hooks/useAuth';
@@ -16,13 +16,13 @@ import { deleteSchedule, getCurrentTimetable, getUserSelections, listSchedules, 
 import type { TimetableSection } from '../types/timetable';
 import type { SavedSchedule } from '../types/schedule';
 import { detectLocalConflicts } from '../utils/timetable';
+import type { AutoScheduleResult } from '../utils/autoSchedule';
 
 const tabs = [
   { key: 'upload', label: 'Upload Excel' },
   { key: 'dashboard', label: 'Dashboard' },
   { key: 'saved', label: 'Lịch đã lưu' },
   { key: 'chat', label: ' Trò chuyện' },
-  { key: 'conflicts', label: 'Lọc & Xung đột' },
 ];
 
 export function ScheduleBuilderPage() {
@@ -294,7 +294,7 @@ export function ScheduleBuilderPage() {
                         setSelectedSubjectCode(null);
                       }
                     } catch (error) {
-                      setUploadError(error instanceof Error ? error.message : 'Upload that bai');
+                      setUploadError(error instanceof Error ? error.message : 'Upload thất bại');
                     } finally {
                       setLoadingUpload(false);
                     }
@@ -315,6 +315,7 @@ export function ScheduleBuilderPage() {
                         onSelectSubject={setSelectedSubjectCode}
                         onChooseSubject={chooseSubject}
                         onClearSubject={clearSubject}
+                        onChooseClass={chooseClass}
                       />
                     </div>
 
@@ -352,8 +353,9 @@ export function ScheduleBuilderPage() {
             )}
 
             {activeTab === 'dashboard' ? (
-              <section className="tempo-surface-card tempo-dashboard-workbench">
-                <div className="tempo-dashboard-workbench-left">
+              <>
+                {/* Top row: Subject Selection + Dashboard title */}
+                <section className="tempo-surface-card tempo-dashboard-top-row">
                   <div className="tempo-panel-toolbar tempo-dashboard-title-block">
                     <div>
                       <h3>{dashboardTitle}</h3>
@@ -373,32 +375,58 @@ export function ScheduleBuilderPage() {
                       onSelectSubject={setSelectedSubjectCode}
                       onChooseSubject={chooseSubject}
                       onClearSubject={clearSubject}
+                      onChooseClass={chooseClass}
+                      selectedClassCodeByCourse={selectedClassCodeByCourseCode}
                     />
                   </div>
-                </div>
+                </section>
 
-                <div className="tempo-dashboard-workbench-right">
-                  <ScheduleDashboard
-                    sections={selectedSections}
-                    subject={dashboardSubject}
-                    selectedClassCode={dashboardSelectedClassCode}
-                    onChooseClass={chooseClass}
-                    showHeader={false}
-                    toolbarActions={
-                      <button
-                        type="button"
-                        className="tempo-primary-button"
-                        onClick={() => setAutoScheduleOpen(true)}
-                        disabled={selectedSubjectCodes.length === 0}
-                        style={{ padding: '8px 14px', fontSize: 13, whiteSpace: 'nowrap' }}
-                        title="Hệ thống sẽ tự động chọn lịch phù hợp"
-                      >
-                        🪄 Xếp lịch tự động
-                      </button>
-                    }
-                  />
-                </div>
-              </section>
+                {/* Bottom row: Calendar + Suggestion Panel side by side */}
+                <section className="tempo-dashboard-workbench">
+                  <div className="tempo-dashboard-workbench-center">
+                    <ScheduleDashboard
+                      sections={selectedSections}
+                      subject={dashboardSubject}
+                      selectedClassCode={dashboardSelectedClassCode}
+                      onChooseClass={chooseClass}
+                      showHeader={false}
+                      toolbarActions={
+                        <button
+                          type="button"
+                          className="tempo-primary-button"
+                          onClick={() => setAutoScheduleOpen(true)}
+                          disabled={selectedSubjectCodes.length === 0}
+                          style={{ padding: '8px 14px', fontSize: 13, whiteSpace: 'nowrap' }}
+                          title="Hệ thống sẽ tự động chọn lịch phù hợp"
+                        >
+                          🪄 Xếp lịch tự động
+                        </button>
+                      }
+                    />
+                  </div>
+
+                  {(() => {
+                    const filteredSubjects = subjects.filter((s) => selectedSubjectCodes.includes(s.courseCode));
+                    if (filteredSubjects.length === 0) return null;
+                    return (
+                      <div className="tempo-dashboard-workbench-right">
+                        <SuggestionPanel
+                          subjects={filteredSubjects}
+                          onApply={(suggestionResult: AutoScheduleResult) => {
+                            if (!suggestionResult) return;
+                            const snapshot = suggestionResult.classes.map((cls: TimetableClass) => ({
+                              courseCode: cls.courseCode,
+                              classCode: cls.classCode,
+                            }));
+                            setSelectionSnapshot(snapshot, snapshot[0]?.courseCode ?? null);
+                            setStatusMessage(`Đã áp dụng phương án gợi ý với ${suggestionResult.classes.length} lớp.`);
+                          }}
+                        />
+                      </div>
+                    );
+                  })()}
+                </section>
+              </>
             ) : null}
 
             {activeTab === 'dashboard' ? (
@@ -458,17 +486,7 @@ export function ScheduleBuilderPage() {
               </section>
             ) : null}
 
-            {activeTab === 'conflicts' ? (
-              <ConflictFilterPanel
-                selectedSections={selectedSections}
-                subjects={subjects}
-                suggestedSubjects={suggestedSubjects}
-                onChooseClass={chooseClass}
-                onSelectSubject={setSelectedSubjectCode}
-                onAddSuggestedClass={chooseClass}
-                onGoToDashboard={() => setActiveTab('dashboard')}
-              />
-            ) : null}
+            {/* conflicts tab removed: class selection now available inside SubjectList */}
           </main>
         </div>
       </div>

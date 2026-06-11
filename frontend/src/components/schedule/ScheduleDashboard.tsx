@@ -5,6 +5,8 @@ import { detectLocalConflicts, getCourseTheme, parseSectionTimeRange } from '../
 import type { TimetableClass, TimetableSection, TimetableSubject } from '../../types/timetable';
 import { ConflictPanel } from './ConflictPanel';
 import { isClassFull } from '../../utils/timetable';
+import { SuggestionPanel } from './SuggestionPanel';
+import type { AutoScheduleResult } from '../../utils/autoSchedule';
 
 type ScheduleDashboardProps = {
   sections: TimetableSection[];
@@ -13,6 +15,8 @@ type ScheduleDashboardProps = {
   onChooseClass: (classItem: TimetableClass) => void;
   showHeader?: boolean;
   toolbarActions?: ReactNode;
+  subjects?: TimetableSubject[];
+  onApplySuggestion?: (result: AutoScheduleResult) => void;
 };
 
 type CalendarRange = {
@@ -102,14 +106,14 @@ function layoutOverlapColumns(events: CalendarEventItem[]) {
   });
 }
 
-export function ScheduleDashboard({ sections, subject, selectedClassCode, onChooseClass, showHeader = true, toolbarActions }: ScheduleDashboardProps) {
+export function ScheduleDashboard({ sections, subject, selectedClassCode, onChooseClass, showHeader = true, toolbarActions, subjects = [], onApplySuggestion }: ScheduleDashboardProps) {
   const [detailEvent, setDetailEvent] = useState<LayoutEventItem | null>(null);
   const conflicts: ConflictPreview[] = detectLocalConflicts(sections);
-  const weekdayOrder = ['2', '3', '4', '5', '6', '7', 'CN'];
-  const calendarStartMinutes = 6 * 60 + 45;
-  const calendarEndMinutes = 17 * 60 + 30;
-  const slotMinutes = 45;
-  const slotHeight = 40;
+  const weekdayOrder = ['2', '3', '4', '5', '6', '7'];
+  const calendarStartMinutes = 6 * 60 ;
+  const calendarEndMinutes = 18 * 60 ;
+  const slotMinutes = 60;
+  const slotHeight = 32;
   const slotCount = Math.max(1, Math.ceil((calendarEndMinutes - calendarStartMinutes) / slotMinutes));
 
   const scheduleBounds = useMemo(() => {
@@ -320,11 +324,13 @@ export function ScheduleDashboard({ sections, subject, selectedClassCode, onChoo
         <div className="tempo-calendar-board">
           <div className="tempo-calendar-head">
             <div className="tempo-calendar-corner" />
-            {weekdayOrder.map((weekday) => (
-              <div key={weekday} className="tempo-calendar-day-head">
-                {weekday === '2' ? 'Thứ 2' : weekday === '3' ? 'Thứ 3' : weekday === '4' ? 'Thứ 4' : weekday === '5' ? 'Thứ 5' : weekday === '6' ? 'Thứ 6' : weekday === '7' ? 'Thứ 7' : 'CN'}
-              </div>
-            ))}
+            <div className="tempo-calendar-head-days">
+              {weekdayOrder.map((weekday) => (
+                <div key={weekday} className="tempo-calendar-day-head">
+                  {weekday === '2' ? 'Thứ 2' : weekday === '3' ? 'Thứ 3' : weekday === '4' ? 'Thứ 4' : weekday === '5' ? 'Thứ 5' : weekday === '6' ? 'Thứ 6' : weekday === '7' ? 'Thứ 7' : 'CN'}
+                </div>
+              ))}
+            </div>
           </div>
 
           <div className="tempo-calendar-grid-wrap" style={{ ['--calendar-height' as string]: `${calendarHeight}px` }}>
@@ -388,11 +394,9 @@ export function ScheduleDashboard({ sections, subject, selectedClassCode, onChoo
                               }}
                               onClick={() => setDetailEvent(event)}
                             >
-                              <div className="tempo-calendar-event-code">{event.section.courseCode}</div>
-                              <div className="tempo-calendar-event-title">{event.section.classCode}</div>
+                              <div className="tempo-calendar-event-code">{event.section.courseCode} - {event.section.classCode}</div>
                               <div className="tempo-calendar-event-meta">{event.section.courseName}</div>
                               <div className="tempo-calendar-event-meta">{event.range.label}</div>
-                              <div className="tempo-calendar-event-meta">{event.section.room}</div>
                             </button>
 
                             <button
@@ -531,6 +535,13 @@ export function ScheduleDashboard({ sections, subject, selectedClassCode, onChoo
           </div>
         ) : null}
       </div>
+
+      {onApplySuggestion && subjects.length > 0 && (
+        <SuggestionPanel
+          subjects={subjects}
+          onApply={onApplySuggestion}
+        />
+      )}
 
       <div className="tempo-dashboard-grid">
         <ConflictPanel conflicts={conflicts} />

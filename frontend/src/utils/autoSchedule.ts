@@ -4,17 +4,25 @@ export type AutoScheduleStrategy =
   | 'NO_OVERLAP'
   | 'CONVENIENT_TRAVEL'
   | 'MOST_DAYS_OFF'
-  | 'CUSTOM_DAY_OFF';
+  | 'CUSTOM_DAY_OFF'
+  | 'MORNING_ONLY'
+  | 'AFTERNOON_ONLY'
+  | 'OFF_MONDAY'
+  | 'OFF_TUESDAY'
+  | 'OFF_WEDNESDAY'
+  | 'OFF_THURSDAY'
+  | 'OFF_FRIDAY'
+  | 'OFF_SATURDAY';
 
 export type AutoScheduleResult = {
   classes: TimetableClass[];
   sections: TimetableSection[];
 } | null;
 
-const SESSION_MORNING_START = 6 * 60 + 45; // 06:45
-const SESSION_MORNING_END = 11 * 60 + 45;  // 11:45
-const SESSION_AFTERNOON_START = 12 * 60 + 30; // 12:30
-const SESSION_AFTERNOON_END = 17 * 60 + 30;  // 17:30
+const SESSION_MORNING_START = 6 * 60 + 45;
+const SESSION_MORNING_END = 11 * 60 + 45;
+const SESSION_AFTERNOON_START = 12 * 60 + 30;
+const SESSION_AFTERNOON_END = 17 * 60 + 30;
 
 function extractBuilding(room: string): string {
   const match = room.match(/^([A-Za-z]+\d*)/);
@@ -70,9 +78,7 @@ function hasLocationGap(sections: TimetableSection[]): boolean {
       const aStart = parseTimeToMinutes(a.startTime ?? '');
       const bEnd = parseTimeToMinutes(b.endTime ?? '');
       if (aEnd === null || bStart === null || aStart === null || bEnd === null) continue;
-      // Check if classes are on different buildings
       if (extractBuilding(a.room) === extractBuilding(b.room)) continue;
-      // Get gap (only if they are not overlapping)
       const gap = bStart - aEnd;
       if (gap > 0 && gap < 15) return true;
       const gap2 = aStart - bEnd;
@@ -123,7 +129,6 @@ export function autoSchedule(
 ): AutoScheduleResult {
   if (selectedSubjects.length === 0) return null;
 
-  // For each subject, prepare list of possible classes
   const classOptions: TimetableClass[][] = selectedSubjects
     .filter((s) => s.classes.length > 0)
     .map((s) => s.classes);
@@ -132,7 +137,6 @@ export function autoSchedule(
 
   const allCombinations = generateCombinations(classOptions);
 
-  // Filter by strategy
   let candidates: TimetableClass[][] = [];
 
   if (strategy === 'CUSTOM_DAY_OFF') {
@@ -146,18 +150,15 @@ export function autoSchedule(
       return !hasOverlap(sections);
     });
   } else if (strategy === 'CONVENIENT_TRAVEL') {
-    // No overlap AND no location gap
     candidates = allCombinations.filter((combo) => {
       const sections = flattenSections(combo);
       return !hasOverlap(sections) && !hasLocationGap(sections);
     });
   } else if (strategy === 'MOST_DAYS_OFF') {
-    // No overlap, prefer the one with most days off
     const validCombos = allCombinations.filter((combo) => !hasOverlap(flattenSections(combo)));
     if (validCombos.length === 0) {
       candidates = [];
     } else {
-      // Find combo with most days off (minimize number of weekdays used)
       let bestCombo: TimetableClass[] | null = null;
       let bestDays = 99;
       for (const combo of validCombos) {
@@ -167,17 +168,171 @@ export function autoSchedule(
           bestCombo = combo;
         }
       }
-      // Return first valid combo to keep the loop bounded
       candidates = bestCombo ? [bestCombo] : validCombos.slice(0, 1);
     }
+  } else if (strategy === 'MORNING_ONLY') {
+    candidates = allCombinations.filter((combo) => {
+      const sections = flattenSections(combo);
+      if (hasOverlap(sections)) return false;
+      return sections.every((s) => {
+        const end = parseTimeToMinutes(s.endTime ?? '');
+        if (end === null) return false;
+        return end <= 12 * 60;
+      });
+    });
+  } else if (strategy === 'AFTERNOON_ONLY') {
+    candidates = allCombinations.filter((combo) => {
+      const sections = flattenSections(combo);
+      if (hasOverlap(sections)) return false;
+      return sections.every((s) => {
+        const start = parseTimeToMinutes(s.startTime ?? '');
+        if (start === null) return false;
+        return start >= 12 * 60;
+      });
+    });
+  } else if (strategy.startsWith('OFF_')) {
+    const dayOff = strategy.replace('OFF_', '');
+    const dayMap: Record<string, string> = {
+      'MONDAY': '2',
+      'TUESDAY': '3',
+      'WEDNESDAY': '4',
+      'THURSDAY': '5',
+      'FRIDAY': '6',
+      'SATURDAY': '7',
+    };
+    const offDay = dayMap[dayOff];
+    candidates = allCombinations.filter((combo) => {
+      const sections = flattenSections(combo);
+      if (hasOverlap(sections)) return false;
+      return !sections.some((s) => s.weekday === offDay);
+    });
   }
 
   if (candidates.length === 0) return null;
 
-  // Pick the first candidate (already best)
   const chosen = candidates[0];
   return {
     classes: chosen,
     sections: flattenSections(chosen),
   };
+}
+
+function countOverlappingPairs(sections: TimetableSection[]): number {
+  let count = 0;
+  for (let i = 0; i < sections.length; i++) {
+    for (let j = i + 1; j < sections.length; j++) {
+      const a = sections[i];
+      const b = sections[j];
+      if (a.weekday !== b.weekday) continue;
+      const aStart = parseTimeToMinutes(a.startTime ?? '');
+      const aEnd = parseTimeToMinutes(a.endTime ?? '');
+      const bStart = parseTimeToMinutes(b.startTime ?? '');
+      const bEnd = parseTimeToMinutes(b.endTime ?? '');
+      if (aStart === null || aEnd === null || bStart === null || bEnd === null) continue;
+      if (aStart < bEnd && bStart < aEnd) count += 1;
+    }
+  }
+  return count;
+}
+
+/**
+ * Find best candidate combination for given subjects and a constraint function.
+ * If no candidate passes the constraint, returns the combo with minimal overlaps.
+ */
+export function findBestCandidate(
+  selectedSubjects: TimetableSubject[],
+  constraintFn: (sections: TimetableSection[]) => boolean = () => true,
+): AutoScheduleResult {
+  if (selectedSubjects.length === 0) return null;
+
+  const classOptions: TimetableClass[][] = selectedSubjects
+    .filter((s) => s.classes.length > 0)
+    .map((s) => s.classes);
+
+  if (classOptions.length === 0) return null;
+
+  const allCombinations = generateCombinations(classOptions);
+
+  // First try to find any combo that satisfies the constraint.
+  for (const combo of allCombinations) {
+    const sections = flattenSections(combo);
+    if (constraintFn(sections)) {
+      return { classes: combo, sections };
+    }
+  }
+
+  // No perfect match found: pick combo with minimal overlapping pairs and minimal location gaps.
+  let bestCombo: TimetableClass[] | null = null;
+  let bestScore = Number.POSITIVE_INFINITY;
+
+  for (const combo of allCombinations) {
+    const sections = flattenSections(combo);
+    const overlaps = countOverlappingPairs(sections);
+    const locationPenalty = hasLocationGap(sections) ? 1 : 0;
+    const score = overlaps * 100 + locationPenalty * 10;
+    if (score < bestScore) {
+      bestScore = score;
+      bestCombo = combo;
+    }
+  }
+
+  if (!bestCombo) return null;
+  return { classes: bestCombo, sections: flattenSections(bestCombo) };
+}
+
+/**
+ * Auto schedule with multiple strategies combined (all must pass). If none found,
+ * returns best candidate (may include overlaps) using fallback.
+ */
+export function autoScheduleMultiStrategies(
+  selectedSubjects: TimetableSubject[],
+  strategies: AutoScheduleStrategy[],
+  offSessions: Set<string> = new Set(),
+): AutoScheduleResult {
+  if (strategies.length === 0) return autoSchedule(selectedSubjects, 'NO_OVERLAP', offSessions);
+
+  const constraintFn = (sections: TimetableSection[]) => {
+    // evaluate all selected strategies; if any fails, return false
+    for (const strat of strategies) {
+      if (strat === 'NO_OVERLAP') {
+        if (hasOverlap(sections)) return false;
+      } else if (strat === 'CONVENIENT_TRAVEL') {
+        if (hasOverlap(sections) || hasLocationGap(sections)) return false;
+      } else if (strat === 'MOST_DAYS_OFF') {
+        // prefer fewer days, allow but not enforce here
+      } else if (strat === 'MORNING_ONLY') {
+        if (!sections.every((s) => {
+          const end = parseTimeToMinutes(s.endTime ?? '');
+          return end !== null && end <= 12 * 60;
+        })) return false;
+      } else if (strat === 'AFTERNOON_ONLY') {
+        if (!sections.every((s) => {
+          const start = parseTimeToMinutes(s.startTime ?? '');
+          return start !== null && start >= 12 * 60;
+        })) return false;
+      } else if (strat === 'CUSTOM_DAY_OFF') {
+        if (offSessions.size > 0 && violatesDayOff(sections, offSessions)) return false;
+      } else if (strat.startsWith('OFF_')) {
+        const day = strat.replace('OFF_', '');
+        const dayMap: Record<string, string> = {
+          'MONDAY': '2',
+          'TUESDAY': '3',
+          'WEDNESDAY': '4',
+          'THURSDAY': '5',
+          'FRIDAY': '6',
+          'SATURDAY': '7',
+        };
+        const offDay = dayMap[day];
+        if (sections.some((s) => s.weekday === offDay)) return false;
+      }
+    }
+    return true;
+  };
+
+  // Try to find exact match
+  const exact = findBestCandidate(selectedSubjects, constraintFn);
+  if (exact) return exact;
+
+  // Fallback to best candidate even if overlapping
+  return findBestCandidate(selectedSubjects, () => true);
 }

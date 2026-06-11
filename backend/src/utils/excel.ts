@@ -201,7 +201,7 @@ export function parseTimetableWorkbook(buffer: Buffer, fileName: string): Parsed
   const workbook = XLSX.read(buffer, { type: 'buffer', cellDates: false, cellHTML: false });
   const sheetName = workbook.SheetNames[0];
   if (!sheetName) {
-    throw new HttpError(400, 'File Excel khong co sheet nao hop le', { code: 'EMPTY_WORKBOOK' });
+    throw new HttpError(400, 'File Excel không có sheet nào hợp lệ', { code: 'EMPTY_WORKBOOK' });
   }
 
   const sheet = workbook.Sheets[sheetName];
@@ -212,7 +212,7 @@ export function parseTimetableWorkbook(buffer: Buffer, fileName: string): Parsed
   });
 
   if (!rowsAsArrays.length) {
-    throw new HttpError(400, 'File khong co du lieu dong nao', { code: 'EMPTY_SHEET' });
+    throw new HttpError(400, 'File không có dữ liệu dòng nào', { code: 'EMPTY_SHEET' });
   }
 
   const headerRowIndex = rowsAsArrays.slice(0, 10).reduce((bestIndex, row, currentIndex) => {
@@ -241,7 +241,7 @@ export function parseTimetableWorkbook(buffer: Buffer, fileName: string): Parsed
   });
 
   if (missingColumns.length > 0) {
-    throw new HttpError(400, 'File khong dung format thoi khoa bieu', {
+    throw new HttpError(400, 'File không đúng format thời khóa biểu', {
       code: 'MISSING_REQUIRED_COLUMNS',
       details: {
         fileName,
@@ -252,7 +252,7 @@ export function parseTimetableWorkbook(buffer: Buffer, fileName: string): Parsed
   }
 
   if (invalidRows.length > 0) {
-    throw new HttpError(400, 'Du lieu trong file co dong khong hop le', {
+    throw new HttpError(400, 'Dữ liệu trong file có dòng không hợp lệ', {
       code: 'INVALID_TIMETABLE_ROWS',
       details: {
         invalidRowCount: invalidRows.length,

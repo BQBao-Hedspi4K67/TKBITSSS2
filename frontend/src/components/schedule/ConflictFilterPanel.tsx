@@ -195,50 +195,7 @@ export function ConflictFilterPanel({ selectedSections, subjects, suggestedSubje
         )}
       </div>
 
-      {/* Môn học đề xuất — max 6, ưu tiên IT */}
-      {suggestedSubjectsLimited.length > 0 && (
-        <div style={{ borderTop: '1px solid var(--color-border-tertiary)', paddingTop: 16, marginTop: 4 }}>
-          <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 10 }}>Môn học đề xuất cho học kỳ này</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8 }}>
-            {suggestedSubjectsLimited.map((subject) => {
-              const firstClass = subject.classes[0];
-              const firstSection = firstClass?.sections[0];
-              const full = firstSection ? isClassFull(firstSection) : true;
-              return (
-                <div
-                  key={subject.courseCode}
-                  style={{
-                    border: '1px solid var(--color-border-tertiary)',
-                    borderRadius: 'var(--border-radius-md)',
-                    padding: 10,
-                    opacity: full ? 0.55 : 1,
-                  }}
-                >
-                  <div style={{ fontSize: 12, fontWeight: 600 }}>{subject.courseCode} · {subject.courseName}</div>
-                  <div style={{ fontSize: 10, color: 'var(--color-text-tertiary)', marginBottom: 4 }}>
-                    {subject.creditWeight} tín
-                    {full && <span style={{ marginLeft: 4, color: '#a32d2d' }}>Lớp đầy</span>}
-                  </div>
-                  <div style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
-                    {!full && <span style={{ fontSize: 10, background: '#eaf3de', color: '#27500a', padding: '1px 6px', borderRadius: 8 }}>Còn chỗ</span>}
-                    {full && <span style={{ fontSize: 10, background: '#fcebeb', color: '#791f1f', padding: '1px 6px', borderRadius: 8 }}>Lớp đầy</span>}
-                  </div>
-                  {!full && firstClass && (
-                    <button
-                      type="button"
-                      className="tempo-primary-button"
-                      style={{ width: '100%', fontSize: 11, padding: '4px 8px' }}
-                      onClick={() => onAddSuggestedClass(firstClass)}
-                    >
-                      Thêm vào lịch
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-      )}
+      
     </div>
   );
 }

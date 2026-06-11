@@ -14,7 +14,7 @@ type JwtPayload = {
 export function requireAuth(req: Request, _res: Response, next: NextFunction) {
   const authorization = req.headers.authorization;
   if (!authorization?.startsWith('Bearer ')) {
-    return next(new HttpError(401, 'Token khong hop le hoac bi thieu', { code: 'UNAUTHORIZED' }));
+    return next(new HttpError(401, 'Token không hợp lệ hoặc bị thiếu', { code: 'UNAUTHORIZED' }));
   }
 
   const token = authorization.slice(7);
@@ -29,6 +29,6 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction) {
     };
     next();
   } catch {
-    next(new HttpError(401, 'Token da het han hoac khong hop le', { code: 'UNAUTHORIZED' }));
+    next(new HttpError(401, 'Token đã hết hạn hoặc không hợp lệ', { code: 'UNAUTHORIZED' }));
   }
 }

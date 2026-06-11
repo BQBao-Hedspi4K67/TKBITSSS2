@@ -46,7 +46,7 @@ export async function getUserSelections(userId: string) {
 export async function replaceUserSelections(userId: string, selections: UserSelectionSnapshot[]) {
   const currentBatch = await getCurrentTimetable(userId);
   if (!currentBatch) {
-    throw new HttpError(404, 'Chua co TKB hien tai', { code: 'CURRENT_TIMETABLE_NOT_FOUND' });
+    throw new HttpError(404, 'Chưa có TKB hiện tại', { code: 'CURRENT_TIMETABLE_NOT_FOUND' });
   }
 
   const validCourseCodes = new Set(currentBatch.sections.map((section) => section.courseCode));

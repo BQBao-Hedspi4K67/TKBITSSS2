@@ -13,6 +13,8 @@ type SubjectListProps = {
   onSelectSubject: (courseCode: string) => void;
   onChooseSubject: (courseCode: string) => void;
   onClearSubject: (courseCode: string) => void;
+  onChooseClass?: (classItem: any) => void;
+  selectedClassCodeByCourse?: Record<string, string | null>;
 };
 
 export function SubjectList({
@@ -26,6 +28,8 @@ export function SubjectList({
   onSelectSubject,
   onChooseSubject,
   onClearSubject,
+  onChooseClass,
+  selectedClassCodeByCourse,
 }: SubjectListProps) {
   const [isAllSubjectsOpen, setIsAllSubjectsOpen] = useState(false);
   const [allSearch, setAllSearch] = useState('');
@@ -146,31 +150,66 @@ export function SubjectList({
                 const isActive = activeCode === subject.courseCode;
 
                 return (
-                  <div
-                    key={subject.courseCode}
-                    className="tempo-subject-card-wrap"
-                  >
-                    <button
-                      type="button"
-                      className={isActive ? 'tempo-subject-card is-active' : isSelected ? 'tempo-subject-card is-selected' : 'tempo-subject-card'}
-                      onClick={() => onSelectSubject(subject.courseCode)}
-                    >
-                      <div className="tempo-subject-code">{subject.courseCode}</div>
-                      <div className="tempo-subject-name">{truncateText(subject.courseName, 30)}</div>
-                      <div className="tempo-subject-meta">{subject.creditWeight} tín · {subject.classCount} lớp</div>
-                      {isSelected ? <span className="tempo-badge is-success">Đã chọn</span> : <span className="tempo-badge">Chưa chọn</span>}
-                    </button>
+                  <div key={subject.courseCode} className="tempo-subject-card-wrap">
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button
+                        type="button"
+                        className={isActive ? 'tempo-subject-card is-active' : isSelected ? 'tempo-subject-card is-selected' : 'tempo-subject-card'}
+                        onClick={() => onSelectSubject(subject.courseCode)}
+                        style={{ flex: 1 }}
+                      >
+                        <div className="tempo-subject-code">{subject.courseCode}</div>
+                        <div className="tempo-subject-name">{truncateText(subject.courseName, 30)}</div>
+                        <div className="tempo-subject-meta">{subject.creditWeight} tín · {subject.classCount} lớp</div>
+                        {isSelected ? <span className="tempo-badge is-success">Đã chọn</span> : <span className="tempo-badge">Chưa chọn</span>}
+                      </button>
 
-                    <button
-                      type="button"
-                      className="tempo-subject-clear-icon"
-                      aria-label={`Hủy chọn ${subject.courseCode}`}
-                      title="Hủy chọn"
-                      onMouseDown={(event) => event.preventDefault()}
-                      onClick={() => onClearSubject(subject.courseCode)}
-                    >
-                      🗑
-                    </button>
+                      <button
+                        type="button"
+                        className="tempo-subject-clear-icon"
+                        aria-label={`Hủy chọn ${subject.courseCode}`}
+                        title="Hủy chọn"
+                        onMouseDown={(event) => event.preventDefault()}
+                        onClick={() => onClearSubject(subject.courseCode)}
+                      >
+                        🗑
+                      </button>
+                    </div>
+
+                    {isActive && subject.classes && subject.classes.length > 0 && (
+                      <div style={{ marginTop: 8 }}>
+                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Các lớp của {subject.courseCode}</div>
+                        <div style={{ display: 'grid', gap: 8 }}>
+                          {subject.classes.map((cls) => {
+                            const firstSection = cls.sections[0];
+                            if (!firstSection) return null;
+                            const full = firstSection.enrollmentCount >= firstSection.maxSeats;
+                            const selectedClassCode = (selectedClassCodeByCourse && selectedClassCodeByCourse[subject.courseCode]) ?? null;
+                            const isChecked = selectedClassCode === cls.classCode;
+                            return (
+                              <label
+                                key={cls.classCode}
+                                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, cursor: full ? 'not-allowed' : 'pointer', background: isChecked ? 'var(--color-background-info)' : 'transparent', border: isChecked ? '1px solid var(--color-accent)' : '1px solid var(--color-border-tertiary)', opacity: full ? 0.6 : 1 }}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  disabled={full}
+                                  onChange={() => onChooseClass && onChooseClass(cls)}
+                                />
+                                <div style={{ flex: 1 }}>
+                                  <div style={{ fontWeight: 600 }}>{cls.classCode}</div>
+                                  <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+                                    {firstSection.weekday ? `Thứ ${firstSection.weekday}` : ''} · {firstSection.startTime}–{firstSection.endTime} · {firstSection.room}
+                                  </div>
+                                </div>
+                                <div style={{ fontSize: 11 }}>{firstSection.enrollmentCount}/{firstSection.maxSeats}</div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}

@@ -13,12 +13,12 @@ export async function loginUser(login: string, password: string) {
   });
 
   if (!user) {
-    throw new HttpError(401, 'Thong tin dang nhap khong chinh xac', { code: 'INVALID_CREDENTIALS' });
+    throw new HttpError(401, 'Thông tin đăng nhập không chính xác', { code: 'INVALID_CREDENTIALS' });
   }
 
   const isValid = await bcrypt.compare(password, user.passwordHash);
   if (!isValid) {
-    throw new HttpError(401, 'Thong tin dang nhap khong chinh xac', { code: 'INVALID_CREDENTIALS' });
+    throw new HttpError(401, 'Thông tin đăng nhập không chính xác', { code: 'INVALID_CREDENTIALS' });
   }
 
   const token = jwt.sign(
@@ -78,7 +78,7 @@ export async function registerUser(input: {
   });
 
   if (existingUser) {
-    throw new HttpError(409, 'Email hoac ma sinh vien da ton tai', {
+    throw new HttpError(409, 'Email hoặc mã sinh viên đã tồn tại', {
       code: 'USER_ALREADY_EXISTS',
     });
   }
