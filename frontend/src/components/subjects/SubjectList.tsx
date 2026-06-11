@@ -144,6 +144,7 @@ export function SubjectList({
 
         <div className="tempo-subject-list-shell">
           {selectedPageSubjects.length > 0 ? (
+            <>
             <div className="tempo-subject-grid tempo-subject-grid--selected">
               {selectedPageSubjects.map((subject) => {
                 const isSelected = selectedCodes.includes(subject.courseCode);
@@ -156,7 +157,7 @@ export function SubjectList({
                         type="button"
                         className={isActive ? 'tempo-subject-card is-active' : isSelected ? 'tempo-subject-card is-selected' : 'tempo-subject-card'}
                         onClick={() => onSelectSubject(subject.courseCode)}
-                        style={{ flex: 1 }}
+                        style={{ flex: 1, minHeight: 180 }}
                       >
                         <div className="tempo-subject-code">{subject.courseCode}</div>
                         <div className="tempo-subject-name">{truncateText(subject.courseName, 30)}</div>
@@ -175,45 +176,46 @@ export function SubjectList({
                         🗑
                       </button>
                     </div>
-
-                    {isActive && subject.classes && subject.classes.length > 0 && (
-                      <div style={{ marginTop: 8 }}>
-                        <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 8 }}>Các lớp của {subject.courseCode}</div>
-                        <div style={{ display: 'grid', gap: 8 }}>
-                          {subject.classes.map((cls) => {
-                            const firstSection = cls.sections[0];
-                            if (!firstSection) return null;
-                            const full = firstSection.enrollmentCount >= firstSection.maxSeats;
-                            const selectedClassCode = (selectedClassCodeByCourse && selectedClassCodeByCourse[subject.courseCode]) ?? null;
-                            const isChecked = selectedClassCode === cls.classCode;
-                            return (
-                              <label
-                                key={cls.classCode}
-                                style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px', borderRadius: 8, cursor: full ? 'not-allowed' : 'pointer', background: isChecked ? 'var(--color-background-info)' : 'transparent', border: isChecked ? '1px solid var(--color-accent)' : '1px solid var(--color-border-tertiary)', opacity: full ? 0.6 : 1 }}
-                              >
-                                <input
-                                  type="checkbox"
-                                  checked={isChecked}
-                                  disabled={full}
-                                  onChange={() => onChooseClass && onChooseClass(cls)}
-                                />
-                                <div style={{ flex: 1 }}>
-                                  <div style={{ fontWeight: 600 }}>{cls.classCode}</div>
-                                  <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
-                                    {firstSection.weekday ? `Thứ ${firstSection.weekday}` : ''} · {firstSection.startTime}–{firstSection.endTime} · {firstSection.room}
-                                  </div>
-                                </div>
-                                <div style={{ fontSize: 11 }}>{firstSection.enrollmentCount}/{firstSection.maxSeats}</div>
-                              </label>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    )}
                   </div>
                 );
               })}
             </div>
+
+            {activeCode && subjects.find(s => s.courseCode === activeCode)?.classes && subjects.find(s => s.courseCode === activeCode).classes.length > 0 && (
+              <div style={{ marginTop: 16 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, marginBottom: 12, paddingLeft: 12 }}>Các lớp của {activeCode}</div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: 8, paddingLeft: 12, paddingRight: 12 }}>
+                  {subjects.find(s => s.courseCode === activeCode).classes.map((cls) => {
+                    const firstSection = cls.sections[0];
+                    if (!firstSection) return null;
+                    const full = firstSection.enrollmentCount >= firstSection.maxSeats;
+                    const selectedClassCode = (selectedClassCodeByCourse && selectedClassCodeByCourse[activeCode]) ?? null;
+                    const isChecked = selectedClassCode === cls.classCode;
+                    return (
+                      <label
+                        key={cls.classCode}
+                        style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px', borderRadius: 8, cursor: full ? 'not-allowed' : 'pointer', background: isChecked ? 'var(--color-background-info)' : 'var(--color-background-secondary)', border: isChecked ? '1px solid var(--color-accent)' : '1px solid var(--color-border-tertiary)', opacity: full ? 0.6 : 1 }}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          disabled={full}
+                          onChange={() => onChooseClass && onChooseClass(cls)}
+                        />
+                        <div style={{ flex: 1 }}>
+                          <div style={{ fontWeight: 600 }}>{cls.classCode}</div>
+                          <div style={{ fontSize: 12, color: 'var(--color-text-secondary)' }}>
+                            {firstSection.weekday ? `Thứ ${firstSection.weekday}` : ''} · {firstSection.startTime}–{firstSection.endTime} · {firstSection.room}
+                          </div>
+                        </div>
+                        <div style={{ fontSize: 11 }}>{firstSection.enrollmentCount}/{firstSection.maxSeats}</div>
+                      </label>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            </>
           ) : (
             <div className="tempo-empty-state tempo-subject-empty-state">
               Không tìm thấy môn đã chọn phù hợp với từ khóa.

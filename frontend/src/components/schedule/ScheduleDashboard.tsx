@@ -6,7 +6,9 @@ import type { TimetableClass, TimetableSection, TimetableSubject } from '../../t
 import { ConflictPanel } from './ConflictPanel';
 import { isClassFull } from '../../utils/timetable';
 import { SuggestionPanel } from './SuggestionPanel';
+import { ConflictAlert } from './ConflictAlert';
 import type { AutoScheduleResult } from '../../utils/autoSchedule';
+import { autoResolveConflict } from '../../utils/autoSchedule';
 
 type ScheduleDashboardProps = {
   sections: TimetableSection[];
@@ -17,6 +19,7 @@ type ScheduleDashboardProps = {
   toolbarActions?: ReactNode;
   subjects?: TimetableSubject[];
   onApplySuggestion?: (result: AutoScheduleResult) => void;
+  allSubjects?: TimetableSubject[];
 };
 
 type CalendarRange = {
@@ -286,6 +289,43 @@ export function ScheduleDashboard({ sections, subject, selectedClassCode, onChoo
     setDetailEvent(null);
   };
 
+  const [resolving, setResolving] = useState<string | null>(null);
+
+  const handleAutoResolve = async (conflict: ConflictPreview) => {
+    const metadata = conflict.metadata as { left?: TimetableSection; right?: TimetableSection } | null;
+    if (!metadata?.left || !metadata?.right) return;
+
+    setResolving(conflict.message);
+    try {
+      const alternative = autoResolveConflict(metadata.left, metadata.right, allSubjects ?? []);
+      if (alternative) {
+        onChooseClass(alternative);
+      }
+    } finally {
+      setResolving(null);
+    }
+  };
+
+  const handleManualResolve = (conflict: ConflictPreview) => {
+    const metadata = conflict.metadata as { left?: TimetableSection; right?: TimetableSection } | null;
+    if (!metadata?.left || !metadata?.right) return;
+
+    // Propose removing the second course
+    const msg = `Bạn có muốn xóa ${metadata.right.courseCode} để giải quyết xung đột không?`;
+    if (confirm(msg)) {
+      const courseSubject = (allSubjects ?? []).find(s => s.courseCode === metadata.right.courseCode);
+      if (courseSubject) {
+        // Create a dummy class with no sections to remove the course
+        const dummyClass: TimetableClass = {
+          ...courseSubject.classes[0],
+          classCode: '',
+          sections: [],
+        };
+        onChooseClass(dummyClass);
+      }
+    }
+  };
+
   return (
     <div className="tempo-dashboard-panel">
       {showHeader ? (
@@ -296,6 +336,20 @@ export function ScheduleDashboard({ sections, subject, selectedClassCode, onChoo
           <div className="tempo-panel-summary">{sections.length} lớp</div>
         </div>
       ) : null}
+
+      <div style={{ padding: '0 12px' }}>
+        {conflicts
+          .filter(c => c.type === 'TIME_OVERLAP')
+          .map((conflict, idx) => (
+            <ConflictAlert
+              key={idx}
+              conflict={conflict}
+              onAutoResolve={() => handleAutoResolve(conflict)}
+              onManualResolve={() => handleManualResolve(conflict)}
+              autoResolveLoading={resolving === conflict.message}
+            />
+          ))}
+      </div>
 
       <div className="tempo-calendar-shell">
         <div className="tempo-calendar-toolbar-row">

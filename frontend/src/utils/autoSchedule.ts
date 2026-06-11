@@ -336,3 +336,58 @@ export function autoScheduleMultiStrategies(
   // Fallback to best candidate even if overlapping
   return findBestCandidate(selectedSubjects, () => true);
 }
+
+/**
+ * Auto-resolve a conflict by finding an alternative class for one of the conflicting courses.
+ * @param conflictLeft - Left section in conflict
+ * @param conflictRight - Right section in conflict
+ * @param allSubjects - All available subjects with classes
+ * @returns Alternative class to replace, or null if none found
+ */
+export function autoResolveConflict(
+  conflictLeft: TimetableSection,
+  conflictRight: TimetableSection,
+  allSubjects: TimetableSubject[],
+): TimetableClass | null {
+  // Try to find alternative for left course first
+  const leftSubject = allSubjects.find(s => s.courseCode === conflictLeft.courseCode);
+  if (leftSubject) {
+    const alternative = leftSubject.classes.find(cls => 
+      cls.sections.some(s => s.id !== conflictLeft.id && 
+        (s.weekday !== conflictRight.weekday || 
+          !sectionsOverlap(s, conflictRight)))
+    );
+    if (alternative) return alternative;
+  }
+
+  // Fallback to finding alternative for right course
+  const rightSubject = allSubjects.find(s => s.courseCode === conflictRight.courseCode);
+  if (rightSubject) {
+    const alternative = rightSubject.classes.find(cls => 
+      cls.sections.some(s => s.id !== conflictRight.id && 
+        (s.weekday !== conflictLeft.weekday || 
+          !sectionsOverlap(s, conflictLeft)))
+    );
+    if (alternative) return alternative;
+  }
+
+  return null;
+}
+
+/**
+ * Check if two sections have time overlap
+ */
+export function sectionsOverlap(left: TimetableSection, right: TimetableSection): boolean {
+  if (left.weekday !== right.weekday) return false;
+  
+  const leftStart = parseTimeToMinutes(left.startTime);
+  const leftEnd = parseTimeToMinutes(left.endTime);
+  const rightStart = parseTimeToMinutes(right.startTime);
+  const rightEnd = parseTimeToMinutes(right.endTime);
+
+  if (leftStart === null || leftEnd === null || rightStart === null || rightEnd === null) {
+    return false;
+  }
+
+  return leftStart < rightEnd && rightStart < leftEnd;
+}

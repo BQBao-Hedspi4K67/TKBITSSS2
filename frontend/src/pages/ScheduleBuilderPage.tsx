@@ -390,6 +390,7 @@ export function ScheduleBuilderPage() {
                       selectedClassCode={dashboardSelectedClassCode}
                       onChooseClass={chooseClass}
                       showHeader={false}
+                      allSubjects={subjects}
                       toolbarActions={
                         <button
                           type="button"
