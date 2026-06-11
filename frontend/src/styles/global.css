@@ -1296,6 +1296,43 @@ button {
   margin-top: 16px;
 }
 
+/* Conflict & Warning Animation */
+@keyframes pulse-shake {
+  0%,
+  100% {
+    transform: translateX(0) scaleX(1);
+  }
+  15% {
+    transform: translateX(-2px) scaleX(0.998);
+  }
+  30% {
+    transform: translateX(2px) scaleX(1.002);
+  }
+  45% {
+    transform: translateX(-1px) scaleX(0.999);
+  }
+  60% {
+    transform: translateX(1.5px) scaleX(1.001);
+  }
+  75% {
+    transform: translateX(-0.5px) scaleX(1);
+  }
+}
+
+/* Conflict Alert (RED - Time Overlap) */
+.tempo-conflict-alert-time-overlap {
+  animation: pulse-shake 0.6s ease-in-out infinite;
+  background: linear-gradient(180deg, rgba(254, 226, 226, 0.98), rgba(252, 165, 165, 0.95)) !important;
+  border: 1px solid #f87171 !important;
+}
+
+/* Warning Alert (YELLOW - Location Gap) */
+.tempo-conflict-alert-location-gap {
+  animation: pulse-shake 0.7s ease-in-out infinite;
+  background: linear-gradient(180deg, rgba(254, 243, 199, 0.98), rgba(253, 224, 112, 0.95)) !important;
+  border: 1px solid #fbbf24 !important;
+}
+
 .tempo-schedule-card {
   display: grid;
   gap: 6px;

@@ -6,9 +6,10 @@ import type { TimetableClass, TimetableSection, TimetableSubject } from '../../t
 import { ConflictPanel } from './ConflictPanel';
 import { isClassFull } from '../../utils/timetable';
 import { SuggestionPanel } from './SuggestionPanel';
-import { ConflictAlert } from './ConflictAlert';
 import type { AutoScheduleResult } from '../../utils/autoSchedule';
 import { autoResolveConflict } from '../../utils/autoSchedule';
+import { saveUserSelections } from '../../services/timetableService';
+import { useImportStore } from '../../store/importStore';
 
 type ScheduleDashboardProps = {
   sections: TimetableSection[];
@@ -109,7 +110,7 @@ function layoutOverlapColumns(events: CalendarEventItem[]) {
   });
 }
 
-export function ScheduleDashboard({ sections, subject, selectedClassCode, onChooseClass, showHeader = true, toolbarActions, subjects = [], onApplySuggestion }: ScheduleDashboardProps) {
+export function ScheduleDashboard({ sections, subject, selectedClassCode, onChooseClass, showHeader = true, toolbarActions, subjects = [], onApplySuggestion, allSubjects = [] }: ScheduleDashboardProps) {
   const [detailEvent, setDetailEvent] = useState<LayoutEventItem | null>(null);
   const conflicts: ConflictPreview[] = detectLocalConflicts(sections);
   const weekdayOrder = ['2', '3', '4', '5', '6', '7'];
@@ -293,11 +294,11 @@ export function ScheduleDashboard({ sections, subject, selectedClassCode, onChoo
 
   const handleAutoResolve = async (conflict: ConflictPreview) => {
     const metadata = conflict.metadata as { left?: TimetableSection; right?: TimetableSection } | null;
-    if (!metadata?.left || !metadata?.right) return;
+    if (!metadata?.left || !metadata?.right || !allSubjects) return;
 
     setResolving(conflict.message);
     try {
-      const alternative = autoResolveConflict(metadata.left, metadata.right, allSubjects ?? []);
+      const alternative = autoResolveConflict(metadata.left, metadata.right, allSubjects);
       if (alternative) {
         onChooseClass(alternative);
       }
@@ -306,23 +307,25 @@ export function ScheduleDashboard({ sections, subject, selectedClassCode, onChoo
     }
   };
 
-  const handleManualResolve = (conflict: ConflictPreview) => {
-    const metadata = conflict.metadata as { left?: TimetableSection; right?: TimetableSection } | null;
-    if (!metadata?.left || !metadata?.right) return;
-
-    // Propose removing the second course
-    const msg = `Bạn có muốn xóa ${metadata.right.courseCode} để giải quyết xung đột không?`;
-    if (confirm(msg)) {
-      const courseSubject = (allSubjects ?? []).find(s => s.courseCode === metadata.right.courseCode);
-      if (courseSubject) {
-        // Create a dummy class with no sections to remove the course
-        const dummyClass: TimetableClass = {
-          ...courseSubject.classes[0],
-          classCode: '',
-          sections: [],
-        };
-        onChooseClass(dummyClass);
-      }
+  const handleManualResolve = async (conflict: ConflictPreview, courseCodeToRemove: string) => {
+    setResolving(conflict.message);
+    try {
+      const store = useImportStore.getState();
+      const currentSelections = store.selectedSubjectCodes.map((courseCode) => ({
+        courseCode,
+        classCode: store.selectedClassCodeByCourseCode[courseCode] ?? null,
+      }));
+      
+      // Remove the conflicting course
+      const nextSelections = currentSelections.filter(s => s.courseCode !== courseCodeToRemove);
+      await saveUserSelections({ selections: nextSelections });
+      
+      // Update store
+      store.setSelectionSnapshot(nextSelections, undefined);
+    } catch (error) {
+      console.error('Failed to resolve conflict:', error);
+    } finally {
+      setResolving(null);
     }
   };
 
@@ -338,17 +341,6 @@ export function ScheduleDashboard({ sections, subject, selectedClassCode, onChoo
       ) : null}
 
       <div style={{ padding: '0 12px' }}>
-        {conflicts
-          .filter(c => c.type === 'TIME_OVERLAP')
-          .map((conflict, idx) => (
-            <ConflictAlert
-              key={idx}
-              conflict={conflict}
-              onAutoResolve={() => handleAutoResolve(conflict)}
-              onManualResolve={() => handleManualResolve(conflict)}
-              autoResolveLoading={resolving === conflict.message}
-            />
-          ))}
       </div>
 
       <div className="tempo-calendar-shell">
@@ -598,7 +590,12 @@ export function ScheduleDashboard({ sections, subject, selectedClassCode, onChoo
       )}
 
       <div className="tempo-dashboard-grid">
-        <ConflictPanel conflicts={conflicts} />
+        <ConflictPanel
+          conflicts={conflicts}
+          onAutoResolve={handleAutoResolve}
+          onManualResolve={handleManualResolve}
+          autoResolveLoading={resolving}
+        />
       </div>
     </div>
   );
