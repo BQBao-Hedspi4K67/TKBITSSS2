@@ -307,7 +307,7 @@ export function ScheduleDashboard({ sections, subject, selectedClassCode, onChoo
     }
   };
 
-  const handleManualResolve = async (conflict: ConflictPreview, courseCodeToRemove: string) => {
+  const handleManualResolve = async (conflict: ConflictPreview, courseCodeToKeep: string, classCodeToRemove: string) => {
     setResolving(conflict.message);
     try {
       const store = useImportStore.getState();
@@ -316,12 +316,17 @@ export function ScheduleDashboard({ sections, subject, selectedClassCode, onChoo
         classCode: store.selectedClassCodeByCourseCode[courseCode] ?? null,
       }));
       
-      // Remove the conflicting course
-      const nextSelections = currentSelections.filter(s => s.courseCode !== courseCodeToRemove);
+      // Keep the subject but clear the classCode so user can pick another class
+      const nextSelections = currentSelections.map(s => {
+        if (s.courseCode === courseCodeToKeep && s.classCode === classCodeToRemove) {
+          return { ...s, classCode: null };
+        }
+        return s;
+      });
       await saveUserSelections({ selections: nextSelections });
       
       // Update store
-      store.setSelectionSnapshot(nextSelections, undefined);
+      store.setSelectionSnapshot(nextSelections, courseCodeToKeep);
     } catch (error) {
       console.error('Failed to resolve conflict:', error);
     } finally {

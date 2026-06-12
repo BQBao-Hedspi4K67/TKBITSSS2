@@ -4,7 +4,7 @@ import type { ConflictPreview } from '../../types/timetable';
 type ConflictPanelProps = {
   conflicts: ConflictPreview[];
   onAutoResolve?: (conflict: ConflictPreview) => void;
-  onManualResolve?: (conflict: ConflictPreview, courseCode: string) => Promise<void> | void;
+  onManualResolve?: (conflict: ConflictPreview, courseCode: string, classCode: string) => Promise<void> | void;
   autoResolveLoading?: string | null;
 };
 
@@ -14,10 +14,10 @@ function ManualResolveModal({
   onCancel 
 }: { 
   conflict: ConflictPreview;
-  onResolve: (courseCode: string) => void;
+  onResolve: (courseCode: string, classCode: string) => void;
   onCancel: () => void;
 }) {
-  const metadata = conflict.metadata as { left?: { courseCode?: string }; right?: { courseCode?: string } } | null;
+  const metadata = conflict.metadata as { left?: { courseCode?: string; classCode?: string }; right?: { courseCode?: string; classCode?: string } } | null;
   if (!metadata?.left?.courseCode || !metadata?.right?.courseCode) return null;
 
   return (
@@ -46,18 +46,18 @@ function ManualResolveModal({
           <button
             type="button"
             className="tempo-secondary-button"
-            onClick={() => onResolve(metadata.left!.courseCode!)}
+            onClick={() => onResolve(metadata.left!.courseCode!, metadata.left!.classCode!)}
             style={{ padding: '10px 14px', fontSize: 13, textAlign: 'left' }}
           >
-            🗑 Xóa {metadata.left.courseCode}
+            🗑 Xóa lớp {metadata.left.classCode} ({metadata.left.courseCode})
           </button>
           <button
             type="button"
             className="tempo-secondary-button"
-            onClick={() => onResolve(metadata.right!.courseCode!)}
+            onClick={() => onResolve(metadata.right!.courseCode!, metadata.right!.classCode!)}
             style={{ padding: '10px 14px', fontSize: 13, textAlign: 'left' }}
           >
-            🗑 Xóa {metadata.right.courseCode}
+            🗑 Xóa lớp {metadata.right.classCode} ({metadata.right.courseCode})
           </button>
         </div>
         <button
@@ -159,8 +159,8 @@ export function ConflictPanel({ conflicts, onAutoResolve, onManualResolve, autoR
       {manualResolveConflict && (
         <ManualResolveModal
           conflict={manualResolveConflict}
-          onResolve={(courseCode) => {
-            onManualResolve?.(manualResolveConflict, courseCode);
+          onResolve={(courseCode, classCode) => {
+            onManualResolve?.(manualResolveConflict, courseCode, classCode);
             setManualResolveConflict(null);
           }}
           onCancel={() => setManualResolveConflict(null)}
